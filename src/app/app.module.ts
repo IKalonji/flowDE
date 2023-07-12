@@ -5,6 +5,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { CommonModule } from '@angular/common';
 
 import {StyleClassModule} from 'primeng/styleclass';
 import { ButtonModule } from 'primeng/button';
@@ -18,7 +19,6 @@ import { SplitButtonModule } from 'primeng/splitbutton';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { TreeModule } from 'primeng/tree';
-
 
 @NgModule({
   declarations: [
@@ -40,7 +40,8 @@ import { TreeModule } from 'primeng/tree';
     SplitButtonModule,
     InputTextModule,
     InputTextareaModule,
-    TreeModule
+    TreeModule,
+    CommonModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

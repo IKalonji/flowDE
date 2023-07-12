@@ -30,11 +30,11 @@
         <div class="col-9" style="flex: 1;">
             <div class="grid grid-nogutter h-full">
                 <div class="col-12">
-                    <div class="text-left border-noround border-1 h-full">
-                        <p-editor [(ngModel)]="dataFromSelectedFile" [style]="{ height: '320px' }">
+                    <div class="text-left border-noround h-full border-1">
+                        <p-editor [(ngModel)]="dataFromSelectedFile" [style]="{ height: '360px' , border: 'none'}">
                             <ng-template pTemplate="header">
                                 <span class="ql-formats">
-                                    <button type="button" class="ql-code-block" aria-label="CodeBlock"></button>
+                                    <button type="button" class="ql-code-block" aria-label="CodeBlock" [disabled]="disableEditorButton" #codeblock></button>
                                 </span>
                             </ng-template>
                         </p-editor>

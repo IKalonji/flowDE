@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { TreeNode } from 'primeng/api';
 
 @Component({
@@ -7,6 +7,7 @@ import { TreeNode } from 'primeng/api';
   styleUrls: ['./flowde.component.css']
 })
 export class FlowdeComponent implements OnInit {
+  @ViewChild('codeblock', {static:false}) codeblock?: ElementRef
 
   dataFromSelectedFile:string = "Hello";
 
@@ -14,9 +15,12 @@ export class FlowdeComponent implements OnInit {
 
   selectedFile: string = "";
 
+  disableEditorButton = false;
+
   constructor() { }
 
   ngOnInit(): void {
+    this.codeblock?.nativeElement.click()
   }
 
   createWorkspace(){
@@ -31,6 +35,10 @@ export class FlowdeComponent implements OnInit {
   nodeSelect(event:any){
     console.log("SELECT Event: ", event);
     console.log(this.selectedFile);
+  }
+
+  updateFile(event:any){
+    console.log(event)
   }
 
 
