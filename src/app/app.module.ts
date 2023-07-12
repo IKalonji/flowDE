@@ -19,6 +19,7 @@ import { SplitButtonModule } from 'primeng/splitbutton';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { TreeModule } from 'primeng/tree';
+import { TooltipModule } from 'primeng/tooltip';
 
 @NgModule({
   declarations: [
@@ -42,6 +43,7 @@ import { TreeModule } from 'primeng/tree';
     InputTextareaModule,
     TreeModule,
     CommonModule,
+    TooltipModule
   ],
   providers: [],
   bootstrap: [AppComponent]

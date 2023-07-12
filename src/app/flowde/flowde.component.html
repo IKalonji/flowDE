@@ -7,9 +7,9 @@
             </div>
         </div>
         <div class="p-toolbar-group-end">
-            <p-button icon="pi pi-plus" class="mr-2"></p-button>
-            <p-button icon="pi pi-save" styleClass="p-button-success mr-2"></p-button>
-            <p-button icon="pi pi-sign-out" styleClass="p-button-danger"></p-button>
+            <p-button icon="pi pi-plus" class="mr-2" pTooltip="New Workspace" (onClick)="newWorkspace()"></p-button>
+            <!-- <p-button icon="pi pi-save" styleClass="p-button-success mr-2" pTooltip="Save Workspace"></p-button> -->
+            <p-button icon="pi pi-sign-out" styleClass="p-button-danger" pTooltip="Exit" (onClick)="logout()"></p-button>
         </div>
     </p-toolbar>
     <div style="flex: 1;" class="grid nested-grid grid-nogutter max-h-full">
@@ -34,14 +34,20 @@
                         <p-editor [(ngModel)]="dataFromSelectedFile" [style]="{ height: '360px' , border: 'none'}">
                             <ng-template pTemplate="header">
                                 <span class="ql-formats">
-                                    <button type="button" class="ql-code-block" aria-label="CodeBlock" [disabled]="disableEditorButton" #codeblock></button>
+                                    <label>Edit the file below</label>
+                                    <button pButton label="Save File" icon="pi pi-save" (click)="saveFile($event)" styleClass="p-button-success mr-2"></button>
                                 </span>
                             </ng-template>
                         </p-editor>
                     </div>
                 </div>
                 <div class="col-12">
-                    <div class="text-left p-3 border-noround border-1 font-bold h-full">12</div>
+                    <div class="card text-left p-3 border-noround border-1 font-bold h-full">
+                        --Execution Output--
+                        <div>
+                            <p>{{output}}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
