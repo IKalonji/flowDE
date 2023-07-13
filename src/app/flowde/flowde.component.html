@@ -27,7 +27,7 @@
                             <p-button icon="pi pi-cloud-upload" styleClass="p-button-secondary p-button-sml" pTooltip="Deploy contract" (onClick)="contractOptions('deploy')"></p-button>
                             <p-button icon="pi pi-forward" styleClass="p-button-info p-button-sml" pTooltip="Run transaction" (onClick)="contractOptions('transaction')"></p-button>
                             <p-button icon="pi pi-code" styleClass="p-button-help p-button-sml" pTooltip="Run script" (onClick)="contractOptions('script')"></p-button>
-                            <p-button icon="pi pi-save" styleClass="p-button-success" pTooltip="Save current file" (onClick)="saveFile($event)"></p-button>
+                            <p-button icon="pi pi-save" styleClass="p-button-success" pTooltip="Save current file" (onClick)="saveFile()"></p-button>
                         </span>
                     </div>
                     <div class="text-center p-1" *ngIf="fileManagement">
@@ -68,7 +68,7 @@
             <div class="grid grid-nogutter h-full">
                 <div class="col-12">
                     <div class="text-left border-noround h-full border-1">
-                        <p-editor [(ngModel)]="dataFromSelectedFile" [style]="{ height: '320px' , border: 'none'}">
+                        <p-editor [ngModel]="dataFromSelectedFile" (onTextChange)="textChangeEvent($event)" [style]="{ height: '320px' , border: 'none'}" disabled="disableEditor">
                             <ng-template pTemplate="header">
                                 <span class="ql-formats">
                                     <label>Editor</label>
@@ -93,7 +93,7 @@
                 <label>{{dialogMsg}}</label>
             </div>
         </p-dialog>
-        <p-dialog header="Header" [(visible)]="createOrDeleteWorkspaceDialogVisible" [style]="{ width: '50vw' }">
+        <p-dialog header="Manage Workspace" [(visible)]="createOrDeleteWorkspaceDialogVisible" [style]="{ width: '50vw' }">
             <div class="flex py-2 justify-content-center">
                 <input type="text" pInputText [(ngModel)]="createOrDeleteWorkspaceDialogInput" placeholder="Workspace name" disabled="{{createOrDeleteWorkspaceDialogLoading}}"/>
                 <div>
@@ -101,6 +101,17 @@
                     <p-button label="Delete" styleClass="p-button-raised p-button-text" class="p-2" *ngIf="!createOrDeleteWorkspaceDialogLoading" (onClick)="deleteWorkspace()"></p-button>    
                 </div>
                 <i class="pi pi-spin pi-cog" *ngIf="createOrDeleteWorkspaceDialogLoading"></i>
+            </div>
+        </p-dialog>
+        <p-dialog header="Create Account (ONLY EMULATOR/TESTNEST FOR THIS DEMO)" [(visible)]="createAccountDialogVisible" [style]="{ width: '50vw' }">
+            <div class="flex py-2 justify-content-center">
+                <input class="p-1" type="text" pInputText [(ngModel)]="account_name" placeholder="Name the Account" disabled="{{createAccountLoading}}"/>
+                <input class="p-1" type="text" pInputText [(ngModel)]="newAccountWorkspace" placeholder="Workspace to create in" disabled="{{createAccountLoading}}"/>
+                <p-dropdown [options]="networks" [(ngModel)]="network" optionLabel="name"></p-dropdown>
+                <div>
+                    <p-button label="Create" styleClass="p-button-raised p-button-text p-button-info" class="p-2" *ngIf="!createAccountLoading" (onClick)="createAccount()"></p-button> 
+                </div>
+                <i class="pi pi-spin pi-cog" *ngIf="createAccountLoading"></i>
             </div>
         </p-dialog>
     </div>

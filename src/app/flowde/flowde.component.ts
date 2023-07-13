@@ -2,6 +2,7 @@ import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { TreeNode } from 'primeng/api';
 import { WalletService } from '../services/wallet.service';
 import { FlowdeService } from '../services/flowde.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-flowde',
@@ -11,12 +12,11 @@ import { FlowdeService } from '../services/flowde.service';
 export class FlowdeComponent implements OnInit {
 
   dataFromSelectedFile:string = "Welcome to flowDE\nTo begin create a new workspace, which is a project that will contain the folders needed to begin developing on flow.";
-
   workspaces: TreeNode[][] = [];
-
   selectedFile: TreeNode = {};
 
-  disableEditorButton = false;
+  disableEditor = true;
+  editorText = this.dataFromSelectedFile;
 
   output: string = "Output displayed here!"
 
@@ -49,7 +49,11 @@ export class FlowdeComponent implements OnInit {
     { name: ' mainnet'},
 ];
 
-  constructor(private walletService: WalletService, private flowdeService: FlowdeService) {}
+  createAccountLoading = false;
+  createAccountDialogVisible = false;
+  newAccountWorkspace = "";
+
+  constructor(private walletService: WalletService, private flowdeService: FlowdeService, private router: Router) {}
 
   ngOnInit(): void {
       this.dialogMsg = "Checking if user exists using the wallet used to sign in"
@@ -85,6 +89,7 @@ export class FlowdeComponent implements OnInit {
     console.log("SELECT Event: ", event);
     console.log("SELECTED FILE: ", this.selectedFile);
     this.dataFromSelectedFile = this.selectedFile?.data;
+    this.disableEditor = false;
   }
 
   workspace(){
@@ -128,12 +133,26 @@ export class FlowdeComponent implements OnInit {
             }
           )
   }
+
   addAccount(){
     console.log("Add account to flow.json");
+    this.createAccountDialogVisible = true;
+  }
+
+  createAccount(){
+    this.createAccountLoading = !this.createAccountLoading
+    this.flowdeService.createAccount(this.walletService.wallet, this.newAccountWorkspace, this.account_name, this.network.name).subscribe(
+      (data: any) => {
+        this.output = `Result:${data.result} -- Detail:${data.result} --Error:${data.error ? data.error : "None"} -- Data:${data.data}`
+        this.getWorkspace();
+      }
+    )
   }
 
   logout(){
     console.log("Logout");
+    this.walletService.disconnect()
+    this.router.navigate([""]);
   }
 
   fileOptions(action: string){
@@ -141,11 +160,20 @@ export class FlowdeComponent implements OnInit {
     this.currentManagementSelection = action;
   }
 
-  saveFile(event:any){
-    console.log(event)
+  textChangeEvent(event:any){
+    console.log(event);
+    this.editorText = event.textValue;
+  }
+
+  saveFile(){
     console.log("Save file");
-    this.selectedFile.data = this.dataFromSelectedFile;
+    this.selectedFile.data = this.editorText;
     console.log(this.selectedFile?.data);
+    this.flowdeService.saveToFile(this.walletService.wallet, this.selectedFile.parent?.type, this.selectedFile.parent?.label?.toLowerCase(), this.selectedFile.label, this.editorText).subscribe(
+      (data:any)=>{
+        this.output = `Result:${data.result} -- Detail:${data.result} --Error:${data.error ? data.error : "None"}`
+      }
+    )
   }
 
   newFile(workspace:string | undefined){

@@ -35,7 +35,16 @@ export class FlowdeService {
     return this.http.post(url,body);
   }
 
-  createAccount(){}
+  createAccount(user: string|undefined, workspace: string|undefined, account_name:string, network: string){
+    let url = this.BASE_URL + "create_account";
+    let body = {
+      "user": user,
+      "workspace": workspace,
+      "account_name": account_name,
+      "network": network
+    };
+    return this.http.post(url, body);
+  }
 
   getWorkspaces(user: string | undefined){
     let url = this.BASE_URL+"get_workspaces";
@@ -86,7 +95,18 @@ export class FlowdeService {
   }
 
   renameFile(){}
-  addtoFile(){}
+
+  saveToFile(user: string|undefined, workspace: string|undefined, folder:string|undefined, file:string|undefined, content:string){
+    let url = this.BASE_URL + "add_to_file";
+    let body = {
+      "user": user,
+      "workspace": workspace,
+      "folder": folder,
+      "file": file,
+      "contents": content
+    }
+    return this.http.post(url, body);
+  }
   
   deployContract(user: string|undefined, workspace:string|undefined, account_name: string, network: string = 'testnet', file:string){
     let url = this.BASE_URL + "deploy_contract";
@@ -100,7 +120,7 @@ export class FlowdeService {
     return this.http.post(url, body)
   }
   runTransaction(){}
-  
+
   runScript(user: string|undefined, workspace:string|undefined, network:string, file:string){
     let url = this.BASE_URL + "run_script";
     let body = {
@@ -113,18 +133,3 @@ export class FlowdeService {
   }
 
 }
-
-/*
-            "create_workspace": self.create_workspace,
-            "delete_workspace": self.delete_workspace,
-            "get_workspace": self.get_workspace,
-            "create_file": self.create_file,
-            "rename_file": self.rename_file,
-            "add_to_file": self.add_to_file,
-            "delete_file": self.delete_file,
-            "deploy_contracts":self.deploy_contracts,
-            "run_transaction":self.run_transaction,
-            "run_script": self.run_script,
-            "create_account": self.create_account,
-            "create_user": self.create_user,
-*/
