@@ -6,6 +6,7 @@ import { AppComponent } from './app.component';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { HttpClientModule } from '@angular/common/http'
 
 import {StyleClassModule} from 'primeng/styleclass';
 import { ButtonModule } from 'primeng/button';
@@ -20,6 +21,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { TreeModule } from 'primeng/tree';
 import { TooltipModule } from 'primeng/tooltip';
+import { DialogModule } from 'primeng/dialog';
+import { DropdownModule } from 'primeng/dropdown';
 
 @NgModule({
   declarations: [
@@ -43,7 +46,10 @@ import { TooltipModule } from 'primeng/tooltip';
     InputTextareaModule,
     TreeModule,
     CommonModule,
-    TooltipModule
+    TooltipModule,
+    HttpClientModule,
+    DialogModule,
+    DropdownModule
   ],
   providers: [],
   bootstrap: [AppComponent]

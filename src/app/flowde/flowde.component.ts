@@ -1,5 +1,7 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { TreeNode } from 'primeng/api';
+import { WalletService } from '../services/wallet.service';
+import { FlowdeService } from '../services/flowde.service';
 
 @Component({
   selector: 'app-flowde',
@@ -10,7 +12,7 @@ export class FlowdeComponent implements OnInit {
 
   dataFromSelectedFile:string = "Welcome to flowDE\nTo begin create a new workspace, which is a project that will contain the folders needed to begin developing on flow.";
 
-  workspaces: TreeNode[][] = [dummyWorkspace];
+  workspaces: TreeNode[][] = [];
 
   selectedFile: TreeNode = {};
 
@@ -18,15 +20,61 @@ export class FlowdeComponent implements OnInit {
 
   output: string = "Output displayed here!"
 
-  constructor() {}
+  setupDialogVisible = true;
+  dialogMsg: string = "";
+
+  createOrDeleteWorkspaceDialogVisible = false;
+  createOrDeleteWorkspaceDialogHeader = "Manage Workspace";
+  createOrDeleteWorkspaceDialogInput = "";
+  createOrDeleteWorkspaceDialogLoading = false;
+
+  fileManagement = false;
+  filename = ""
+  folder = {name:""}
+  folders = [
+    { name: 'contracts'},
+    { name: 'scripts'},
+    { name: ' transactions'},
+    { name: 'tests'},
+];
+  currentManagementSelection = "";
+
+  contractFunctions = false;
+  contractFunctionSelection = "";
+  account_name = "";
+  network = {name:""}
+  networks = [
+    { name: 'emulator'},
+    { name: 'testnet'},
+    { name: ' mainnet'},
+];
+
+  constructor(private walletService: WalletService, private flowdeService: FlowdeService) {}
 
   ngOnInit(): void {
+      this.dialogMsg = "Checking if user exists using the wallet used to sign in"
+      this.flowdeService.isUser(this.walletService.wallet).subscribe((user:any)=>{
+        console.log("response from isuser", user);
+        if(user.result == "OK"){
+          this.dialogMsg = "User is valid. Getting your workspaces"
+          this.flowdeService.getWorkspaces(this.walletService.wallet).subscribe((workspace:any)=>{
+            console.log(workspace);
+            this.buildWorkspaceTreeObject(workspace.data)
+            this.dialogMsg = "";
+            this.setupDialogVisible = false;
+          })
+        }
+        else { 
+          this.dialogMsg = "User not found. Creating a user with wallet used to sign in"
+          this.flowdeService.createUser(this.walletService.wallet).subscribe((newUser: any)=>{
+            console.log(newUser)
+            this.dialogMsg = "User created";
+            this.setupDialogVisible = false;
+          })
+        }
+      });
   }
-
-  createWorkspace(){
-    console.log("Create workspace");
-  }
-
+  
   nodeExpand(event:any){
     console.log("EXPAND Event: ", event);
     console.log(this.selectedFile);
@@ -39,6 +87,60 @@ export class FlowdeComponent implements OnInit {
     this.dataFromSelectedFile = this.selectedFile?.data;
   }
 
+  workspace(){
+    console.log("setup dialog for manage");
+    this.createOrDeleteWorkspaceDialogVisible = true;
+  }
+
+  getWorkspace(){
+    this.flowdeService.getWorkspaces(this.walletService.wallet).subscribe((workspace:any)=>{
+      console.log(workspace);
+      if(workspace.result == "OK"){
+        this.buildWorkspaceTreeObject(workspace.data)
+      }
+    })
+  }
+
+  createWorkspace(){
+    this.createOrDeleteWorkspaceDialogLoading = true;
+    console.log("executing create");
+          this.flowdeService.createWorkspace(this.walletService.wallet, this.createOrDeleteWorkspaceDialogInput).subscribe(
+            (data: any)=>{
+              console.log(data.result);
+              this.createOrDeleteWorkspaceDialogLoading = false;
+              this.createOrDeleteWorkspaceDialogVisible = false;
+              this.getWorkspace();
+              this.output = `Result:${data.result} -- Detail:${data.result} --Error:${data.error ? data.error : "None"}`
+            }
+          )
+  }
+
+  deleteWorkspace(){
+    this.createOrDeleteWorkspaceDialogLoading = true;
+    console.log("executing delete");
+          this.flowdeService.deleteWorkspace(this.walletService.wallet, this.createOrDeleteWorkspaceDialogInput).subscribe(
+            (data: any)=>{
+              console.log(data.result);
+              this.createOrDeleteWorkspaceDialogLoading = false;
+              this.createOrDeleteWorkspaceDialogVisible = false;
+              this.getWorkspace();
+              this.output = `Result:${data.result} -- Detail:${data.result} --Error:${data.error ? data.error : "None"}`
+            }
+          )
+  }
+  addAccount(){
+    console.log("Add account to flow.json");
+  }
+
+  logout(){
+    console.log("Logout");
+  }
+
+  fileOptions(action: string){
+    this.fileManagement = !this.fileManagement;
+    this.currentManagementSelection = action;
+  }
+
   saveFile(event:any){
     console.log(event)
     console.log("Save file");
@@ -46,77 +148,150 @@ export class FlowdeComponent implements OnInit {
     console.log(this.selectedFile?.data);
   }
 
-  newWorkspace(){
-    console.log("New workspace");
+  newFile(workspace:string | undefined){
+    console.log("New File");    
+    this.flowdeService.createFile(this.walletService.wallet, workspace, this.folder.name, this.filename).subscribe(
+      (data:any)=>{
+        this.output = `Result:${data.result} -- Detail:${data.result} --Error:${data.error ? data.error : "None"}`
+        this.getWorkspace();
+        this.fileManagement = false;
+      }
+    )
   }
 
-  logout(){
-    console.log("Logout");
+  deleteFile(workspace: string | undefined){
+    console.log("Delete File");
+    this.flowdeService.deleteFile(this.walletService.wallet, workspace, this.folder.name, this.filename).subscribe(
+      (data:any)=>{
+        this.output = `Result:${data.result} -- Detail:${data.result} --Error:${data.error ? data.error : "None"}`
+        this.getWorkspace();
+        this.fileManagement = false;
+      }
+    )
+  }
+
+  contractOptions(action: string){
+    this.contractFunctions = !this.contractFunctions;
+    this.contractFunctionSelection = action;
+  }
+
+  deployContract(){
+    console.log("Deploy Contract");
+    if(this.selectedFile.parent?.label == "Contracts" && this.selectedFile.label?.endsWith(".cdc")){
+      this.flowdeService.deployContract(this.walletService.wallet, this.selectedFile.parent.type, this.account_name, this.network.name, this.selectedFile.label).subscribe(
+        (data:any)=>{
+          this.output = `Result:${data.result} -- Detail:${data.result} --Error:${data.error ? data.error : "None"}`
+        }
+      )
+    }
+    else {
+      this.output = `Result: ERROR -- Detail: SELECT A CONTRACT FILE BY CLICKING ON IT --Error: NO CONTRACT SELECTED`
+    }
+  }
+
+  runScript(){
+    console.log("Run Script");
+    if(this.selectedFile.parent?.label == "Scripts" && this.selectedFile.label?.endsWith(".cdc")){
+      this.flowdeService.runScript(this.walletService.wallet, this.selectedFile.parent.type, this.network.name, this.selectedFile.label).subscribe(
+        (data:any)=>{
+          this.output = `Result:${data.result} -- Detail:${data.result} --Error:${data.error ? data.error : "None"}`
+        }
+      )
+    }
+    else{
+      this.output = `Result: ERROR -- Detail: SELECT A SCRIPT FILE BY CLICKING ON IT --Error: NO SCRIPT SELECTED`
+    }
+  }
+
+  runTransaction(){
+    console.log("Run Transaction");
+  }
+
+  buildWorkspaceTreeObject(workspaceResponse: any[]){
+    this.workspaces = []
+    if(workspaceResponse.length == 0) return;
+    workspaceResponse.forEach(_workspace => {
+    const _contracts: any[] = _workspace.folders.contracts;
+    const _scripts: any[] = _workspace.folders.scripts;
+    const _transactions: any[] = _workspace.folders.transactions;
+    const _tests: any[] = _workspace.folders.tests; 
+
+    let contractsTreenode: TreeNode = {
+      type: _workspace.workspace,
+      label: "Contracts",
+      data: 'Contracts Folder',
+      icon: 'pi pi-fw pi-folder-open',
+      children: []
+      }
+    
+    let scriptsTreenode: TreeNode = {
+      type: _workspace.workspace,
+      label: "Scripts",
+      data: 'Scripts Folder',
+      icon: 'pi pi-fw pi-folder-open',
+      children: []
+      }
+    let transactionsTreenode: TreeNode = {
+      type: _workspace.workspace,
+      label: "Transactions",
+      data: 'Transactions Folder',
+      icon: 'pi pi-fw pi-folder-open',
+      children: []
+      }
+    let testsTreenode: TreeNode = {
+      type: _workspace.workspace,
+      label: "Tests",
+      data: 'Tests Folder',
+      icon: 'pi pi-fw pi-folder-open',
+      children: []
+      }
+    let flowJSONTreenode: TreeNode = {
+      type: _workspace.workspace,
+      label: "flow.json",
+      data: `${_workspace['flow.json']}`,
+      icon: 'pi pi-fw pi-file',
+      }
+    let readmeTreenode: TreeNode = {
+      type: _workspace.workspace,
+      label: "README.md",
+      data: `${_workspace['README.md']}`,
+      icon: 'pi pi-fw pi-file',
+      }
+    
+    _contracts.forEach((_element: any) => {
+      let newChild: TreeNode = {
+        label: _element.name,
+        data: `${_element.content}`,
+        icon: 'pi pi-fw pi-file',
+      }
+      contractsTreenode.children?.push(newChild)
+    });
+    _scripts.forEach((_element: any) => {
+      let newChild: TreeNode = {
+        label: _element.name,
+        data: `${_element.content}`,
+        icon: 'pi pi-fw pi-file',
+      }
+      scriptsTreenode.children?.push(newChild)
+    });
+    _transactions.forEach((_element: any) => {
+      let newChild: TreeNode = {
+        label: _element.name,
+        data: `${_element.content}`,
+        icon: 'pi pi-fw pi-file',
+      }
+      transactionsTreenode.children?.push(newChild)
+    });
+    _tests.forEach((_element: any) => {
+      let newChild: TreeNode = {
+        label: _element.name,
+        data: `${_element.content}`,
+        icon: 'pi pi-fw pi-file',
+      }
+      testsTreenode.children?.push(newChild)
+    });
+    let _workspaceTreeNode:TreeNode[] = [contractsTreenode, scriptsTreenode, transactionsTreenode, testsTreenode, flowJSONTreenode, readmeTreenode]; 
+    this.workspaces.push(_workspaceTreeNode);
+    });
   }
 }
-
-export const dummyWorkspace = [
-  {
-    key: '0',
-    label: 'Contracts',
-    data: 'Contracts Folder',
-    icon: 'pi pi-fw pi-inbox',
-    children: [
-        {
-            key: '0-0',
-            label: 'dummyContract.cdc',
-            data: 'Dummy Contract',
-            icon: 'pi pi-fw pi-file',
-        }
-      ]
-  },
-  {
-    key: '1',
-    label: 'Scripts',
-    data: 'Scripts Folder',
-    icon: 'pi pi-fw pi-inbox',
-    children: [
-        {
-            key: '0-0',
-            label: 'scripts.cdc',
-            data: 'Dummy Scripts',
-            icon: 'pi pi-fw pi-file',
-        }
-      ]
-    },
-  {
-    key: '2',
-    label: 'Transactions',
-    data: 'transactions Folder',
-    icon: 'pi pi-fw pi-inbox',
-    children: [
-      {
-          key: '0-0',
-          label: 'transactions.cdc',
-          data: 'Dummy transaction',
-          icon: 'pi pi-fw pi-file',
-      }
-    ]
-  },
-  {
-    key: '3',
-    label: 'Tests',
-    data: 'Tests Folder',
-    icon: 'pi pi-fw pi-inbox',
-    children: [
-      {
-          key: '0-0',
-          label: 'testfile.cdc',
-          data: 'Dummy Test',
-          icon: 'pi pi-fw pi-file',
-      }
-    ]
-  },
-  {
-    key: '4',
-    label: 'flow.json',
-    data: 'flow.json content',
-    icon: 'pi pi-fw pi-inbox',
-  },
-
-]

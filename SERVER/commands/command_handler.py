@@ -12,7 +12,7 @@ class Command_Handler(Response_Codes):
         self.valid_commands = {
             "create_workspace": self.create_workspace,
             "delete_workspace": self.delete_workspace,
-            "get_workspace": self.get_workspace,
+            "get_workspaces": self.get_workspace,
             "create_file": self.create_file,
             "rename_file": self.rename_file,
             "add_to_file": self.add_to_file,
@@ -22,25 +22,30 @@ class Command_Handler(Response_Codes):
             "run_script": self.run_script,
             "create_account": self.create_account,
             "create_user": self.create_user,
+            "is_user": self.is_user
         }
         self.BASE_DIR = "users"
         self.invalid_command_response = json.dumps({"result": self.ERROR, "detail": self.invalid_command})
         self.WALLET_CREATOR_ACCOUNT = "0x7721b98bbf12fcb9"
         self.WALLET_CREATOR_KEY = "4d2834338c2a35aca39ab8be94b45fc5d5722975a1114e0f3dac80ee32813e5e"
 
-    def handle_request(self, request):
+    def handle_request(self, command, request):
         try:
-            execution_response = self.valid_commands[request["command"]](request)
+            execution_response = self.valid_commands[command](request)
             return execution_response
         except KeyError as invalid_command:
             return self.invalid_command_response
-    
-    def create_user(self, parameters):
-        process = subprocess.run("pwd", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = process.stdout, process.stderr
-        print("CURRENT DIR: ", stdout)
-        print("ERROR ", stderr)
+        
+    def is_user(self, parameters):
+        try:
+            user = parameters["user"]
+            if user in os.listdir(os.path.join(os.getcwd(),self.BASE_DIR)):
+                return {"result": self.SUCCESS, "detail": "Valid user"}
+            return {"result": self.ERROR, "detail": "No user on file"}
+        except KeyError as missing_args:
+            self.invalid_command_response
 
+    def create_user(self, parameters):
         try:
             user = parameters["user"]
             command = f"cd {self.BASE_DIR}  && mkdir {user}" #
@@ -72,7 +77,10 @@ class Command_Handler(Response_Codes):
             user = parameters["user"]
             users_folder_path = os.path.join(os.getcwd(),"users", user)
             workspace_builder = []
-            for workspace in os.listdir(users_folder_path):
+            userDir = os.listdir(users_folder_path)
+            print(userDir)
+            print(len(userDir))
+            for workspace in userDir :
                 new_workspace = {
                     "workspace": workspace,
                     "folders": {
@@ -100,7 +108,7 @@ class Command_Handler(Response_Codes):
                                             "content": "\n".join(file_content)
                                         }
                                     )
-                    workspace_builder.append(new_workspace)
+                workspace_builder.append(new_workspace)
             return {"result": self.SUCCESS, "detail": "command executed successfully", "data": workspace_builder}
         except KeyError as missing_args:
             return self.invalid_command_response

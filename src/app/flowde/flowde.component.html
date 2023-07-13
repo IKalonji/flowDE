@@ -7,9 +7,9 @@
             </div>
         </div>
         <div class="p-toolbar-group-end">
-            <p-button icon="pi pi-plus" class="mr-2" pTooltip="New Workspace" (onClick)="newWorkspace()"></p-button>
-            <!-- <p-button icon="pi pi-save" styleClass="p-button-success mr-2" pTooltip="Save Workspace"></p-button> -->
-            <p-button icon="pi pi-sign-out" styleClass="p-button-danger" pTooltip="Exit" (onClick)="logout()"></p-button>
+            <p-button icon="pi pi-plus" label="Manage Workspaces" class="mr-2" pTooltip="New Workspace" (onClick)="workspace()"></p-button>
+            <p-button icon="pi pi-user-plus" styleClass="p-button-success" class="mr-2" pTooltip="Add account to flow.json" (onClick)="addAccount()"></p-button>
+            <p-button icon="pi pi-sign-out" styleClass="p-button-warning" class="mr-2" pTooltip="Exit" (onClick)="logout()"></p-button>
         </div>
     </p-toolbar>
     <div style="flex: 1;" class="grid nested-grid grid-nogutter max-h-full">
@@ -19,7 +19,44 @@
                     <h2>Workspaces</h2>
                 </div>
                 <div *ngFor="let workspace of workspaces">
-                    <div class="text-center font-bold"><label>workspace name</label></div>
+                    <div class="text-center font-bold p-1"><label>{{workspace[0].type}}</label></div>
+                    <div class="text-center">
+                        <span class="p-buttonset">
+                            <p-button icon="pi pi-file" pTooltip="Add file" (onClick)="fileOptions('add')"></p-button>
+                            <p-button icon="pi pi-trash" styleClass="p-button-danger p-button-sml" pTooltip="Delete file" (onClick)="fileOptions('delete')"></p-button>
+                            <p-button icon="pi pi-cloud-upload" styleClass="p-button-secondary p-button-sml" pTooltip="Deploy contract" (onClick)="contractOptions('deploy')"></p-button>
+                            <p-button icon="pi pi-forward" styleClass="p-button-info p-button-sml" pTooltip="Run transaction" (onClick)="contractOptions('transaction')"></p-button>
+                            <p-button icon="pi pi-code" styleClass="p-button-help p-button-sml" pTooltip="Run script" (onClick)="contractOptions('script')"></p-button>
+                            <p-button icon="pi pi-save" styleClass="p-button-success" pTooltip="Save current file" (onClick)="saveFile($event)"></p-button>
+                        </span>
+                    </div>
+                    <div class="text-center p-1" *ngIf="fileManagement">
+                        <span class="p-input-icon-left p-1">
+                            <i class="pi pi-file"></i>
+                            <input type="text" pInputText [(ngModel)]="filename" placeholder="file.cdc" />
+                        </span>
+                        <div class="card flex justify-content-center p-1">
+                            <p-dropdown [options]="folders" [(ngModel)]="folder" optionLabel="name"></p-dropdown>
+                        </div>
+                        <div class="card flex justify-content-center p-1">
+                            <p-button *ngIf="currentManagementSelection == 'add'" label="Create" styleClass="p-button-raised p-button-textp-button-success" class="p-2" (onClick)="newFile(workspace[0].type)"></p-button>
+                            <p-button *ngIf="currentManagementSelection == 'delete'" label="Delete" styleClass="p-button-raised p-button-text p-button-danger" class="p-2" (onClick)="deleteFile(workspace[0].type)"></p-button>
+                        </div>
+                    </div>
+                    <div class="text-center p-1" *ngIf="contractFunctions">
+                        <span class="p-input-icon-left p-1">
+                            <i class="pi pi-file"></i>
+                            <input type="text" pInputText [(ngModel)]="account_name" placeholder="flow.json account name"/>
+                        </span>
+                        <div class="card flex justify-content-center p-1">
+                            <p-dropdown [options]="networks" [(ngModel)]="network" optionLabel="name" placeholder="Network"></p-dropdown>
+                        </div>
+                        <div class="card flex justify-content-center p-1">
+                            <p-button *ngIf="contractFunctionSelection == 'deploy'" label="Deploy" styleClass="p-button-raised p-button-textp-button-success" class="p-2" (onClick)="deployContract()"></p-button>
+                            <p-button *ngIf="contractFunctionSelection == 'transaction'" label="Transact" styleClass="p-button-raised p-button-text p-button-info" class="p-2" (onClick)="runTransaction()"></p-button>
+                            <p-button *ngIf="contractFunctionSelection == 'script'" label="Run Script" styleClass="p-button-raised p-button-text p-button-help" class="p-2" (onClick)="runScript()"></p-button>
+                        </div>
+                    </div>
                     <div class="card flex justify-content-center p-3">
                         <p-tree class="w-full md:w-30rem" [value]="workspace" selectionMode="single" [(selection)]="selectedFile"
                         (onNodeExpand)="nodeExpand($event)" (onNodeSelect)="nodeSelect($event)"></p-tree>
@@ -31,11 +68,10 @@
             <div class="grid grid-nogutter h-full">
                 <div class="col-12">
                     <div class="text-left border-noround h-full border-1">
-                        <p-editor [(ngModel)]="dataFromSelectedFile" [style]="{ height: '360px' , border: 'none'}">
+                        <p-editor [(ngModel)]="dataFromSelectedFile" [style]="{ height: '320px' , border: 'none'}">
                             <ng-template pTemplate="header">
                                 <span class="ql-formats">
-                                    <label>Edit the file below</label>
-                                    <button pButton label="Save File" icon="pi pi-save" (click)="saveFile($event)" styleClass="p-button-success mr-2"></button>
+                                    <label>Editor</label>
                                 </span>
                             </ng-template>
                         </p-editor>
@@ -51,5 +87,21 @@
                 </div>
             </div>
         </div>
+        <p-dialog header="Setting Up" [(visible)]="setupDialogVisible" [style]="{width: '50vw'}">
+            <div class="text-center">
+                <i class="pi pi-spin pi-cog" style="font-size: 4rem"></i>
+                <label>{{dialogMsg}}</label>
+            </div>
+        </p-dialog>
+        <p-dialog header="Header" [(visible)]="createOrDeleteWorkspaceDialogVisible" [style]="{ width: '50vw' }">
+            <div class="flex py-2 justify-content-center">
+                <input type="text" pInputText [(ngModel)]="createOrDeleteWorkspaceDialogInput" placeholder="Workspace name" disabled="{{createOrDeleteWorkspaceDialogLoading}}"/>
+                <div>
+                    <p-button label="Create" styleClass="p-button-raised p-button-text" class="p-2" *ngIf="!createOrDeleteWorkspaceDialogLoading" (onClick)="createWorkspace()"></p-button>
+                    <p-button label="Delete" styleClass="p-button-raised p-button-text" class="p-2" *ngIf="!createOrDeleteWorkspaceDialogLoading" (onClick)="deleteWorkspace()"></p-button>    
+                </div>
+                <i class="pi pi-spin pi-cog" *ngIf="createOrDeleteWorkspaceDialogLoading"></i>
+            </div>
+        </p-dialog>
     </div>
 </div>
