@@ -119,7 +119,18 @@ export class FlowdeService {
     }
     return this.http.post(url, body)
   }
-  runTransaction(){}
+  
+  runTransaction(user: string|undefined, workspace: string|undefined, network: string, file: string|undefined, account:string){
+    let url = this.BASE_URL + "run_transaction";
+    let body = {
+      "user": user,
+      "workspace": workspace,
+      "network": network,
+      "file": file,
+      "account": account
+    }
+    return this.http.post(url, body);
+  }
 
   runScript(user: string|undefined, workspace:string|undefined, network:string, file:string){
     let url = this.BASE_URL + "run_script";

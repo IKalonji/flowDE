@@ -209,11 +209,13 @@ export class FlowdeComponent implements OnInit {
       this.flowdeService.deployContract(this.walletService.wallet, this.selectedFile.parent.type, this.account_name, this.network.name, this.selectedFile.label).subscribe(
         (data:any)=>{
           this.output = `Result:${data.result} -- Detail:${data.result} --Error:${data.error ? data.error : "None"}`
+          this.resetContractFunctionVariables()
         }
       )
     }
     else {
       this.output = `Result: ERROR -- Detail: SELECT A CONTRACT FILE BY CLICKING ON IT --Error: NO CONTRACT SELECTED`
+      this.resetContractFunctionVariables()
     }
   }
 
@@ -223,16 +225,30 @@ export class FlowdeComponent implements OnInit {
       this.flowdeService.runScript(this.walletService.wallet, this.selectedFile.parent.type, this.network.name, this.selectedFile.label).subscribe(
         (data:any)=>{
           this.output = `Result:${data.result} -- Detail:${data.result} --Error:${data.error ? data.error : "None"}`
+          this.resetContractFunctionVariables()
         }
       )
     }
     else{
       this.output = `Result: ERROR -- Detail: SELECT A SCRIPT FILE BY CLICKING ON IT --Error: NO SCRIPT SELECTED`
+      this.resetContractFunctionVariables()
     }
   }
 
   runTransaction(){
     console.log("Run Transaction");
+    if(this.selectedFile.parent?.label == "Transactions" && this.selectedFile.label?.endsWith(".cdc")){
+      this.flowdeService.runTransaction(this.walletService.wallet, this.selectedFile.parent.type, this.network.name, this.selectedFile.label, this.account_name).subscribe(
+        (data:any)=>{
+          this.output = `Result:${data.result} -- Detail:${data.result} --Error:${data.error ? data.error : "None"}`
+          this.resetContractFunctionVariables()
+        }
+      )
+    }
+    else{
+      this.output = `Result: ERROR -- Detail: SELECT A TRANSACTION FILE BY CLICKING ON IT --Error: NO TRANSACTION SELECTED`
+      this.resetContractFunctionVariables()
+    }
   }
 
   buildWorkspaceTreeObject(workspaceResponse: any[]){
@@ -321,5 +337,12 @@ export class FlowdeComponent implements OnInit {
     let _workspaceTreeNode:TreeNode[] = [contractsTreenode, scriptsTreenode, transactionsTreenode, testsTreenode, flowJSONTreenode, readmeTreenode]; 
     this.workspaces.push(_workspaceTreeNode);
     });
+  }
+
+  resetContractFunctionVariables(){
+    this.contractFunctions = false;
+    this.contractFunctionSelection = "";
+    this.account_name = "";
+    this.network = {name:""}
   }
 }

@@ -1,8 +1,6 @@
 import json
 import subprocess
 import os
-import time
-import pexpect
 
 from commands.response_codes import Response_Codes
 
@@ -24,10 +22,13 @@ class Command_Handler(Response_Codes):
             "create_user": self.create_user,
             "is_user": self.is_user
         }
+        # start emulator
         self.BASE_DIR = "users"
-        self.invalid_command_response = json.dumps({"result": self.ERROR, "detail": self.invalid_command})
+        self.invalid_command_response = {"result": self.ERROR, "detail": self.invalid_command}
+        self.invalid_server_response = {"result": self.ERROR, "detail": self.invalid_server, "error": "Server erred @ FLOW CLI inputs, please check your input values"}
         self.WALLET_CREATOR_ACCOUNT = "0x7721b98bbf12fcb9"
         self.WALLET_CREATOR_KEY = "4d2834338c2a35aca39ab8be94b45fc5d5722975a1114e0f3dac80ee32813e5e"
+        self.start_emulator()
 
     def handle_request(self, command, request):
         try:
@@ -35,6 +36,8 @@ class Command_Handler(Response_Codes):
             return execution_response
         except KeyError as invalid_command:
             return self.invalid_command_response
+        except Exception as exception:
+            return self.invalid_server_response
         
     def is_user(self, parameters):
         try:
@@ -44,6 +47,8 @@ class Command_Handler(Response_Codes):
             return {"result": self.ERROR, "detail": "No user on file"}
         except KeyError as missing_args:
             self.invalid_command_response
+        except Exception as exception:
+            return self.invalid_server_response
 
     def create_user(self, parameters):
         try:
@@ -53,6 +58,8 @@ class Command_Handler(Response_Codes):
             return response
         except KeyError as missing_args:
             return self.invalid_command_response
+        except Exception as exception:
+            return self.invalid_server_response
 
     def create_workspace(self, parameters):
         try:
@@ -62,6 +69,8 @@ class Command_Handler(Response_Codes):
             return response
         except KeyError as missing_args:
             return self.invalid_command_response
+        except Exception as exception:
+            return self.invalid_server_response
 
     def delete_workspace(self, parameters):
         try:
@@ -71,6 +80,8 @@ class Command_Handler(Response_Codes):
             return response
         except KeyError as missing_args:
             return self.invalid_command_response
+        except Exception as exception:
+            return self.invalid_server_response
 
     def get_workspace(self, parameters):
         try:
@@ -112,6 +123,8 @@ class Command_Handler(Response_Codes):
             return {"result": self.SUCCESS, "detail": "command executed successfully", "data": workspace_builder}
         except KeyError as missing_args:
             return self.invalid_command_response
+        except Exception as exception:
+            return self.invalid_server_response
 
     def create_file(self, parameters):
         try:
@@ -121,6 +134,8 @@ class Command_Handler(Response_Codes):
             return response
         except KeyError as missing_args:
             return self.invalid_command_response
+        except Exception as exception:
+            return self.invalid_server_response
     
     def rename_file(self, parameters):
         try:
@@ -130,6 +145,8 @@ class Command_Handler(Response_Codes):
             return response
         except KeyError as missing_args:
             return self.invalid_command_response
+        except Exception as exception:
+            return self.invalid_server_response
         
     def add_to_file(self, parameters):
         try:
@@ -140,6 +157,8 @@ class Command_Handler(Response_Codes):
             return {"result": self.SUCCESS, "detail": "File written to disk"}
         except KeyError as missing_args:
             return self.invalid_command_response
+        except Exception as exception:
+            return self.invalid_server_response
         
     def delete_file(self, parameters):
         try:
@@ -149,6 +168,8 @@ class Command_Handler(Response_Codes):
             return response
         except KeyError as missing_args:
             return self.invalid_command_response
+        except Exception as exception:
+            return self.invalid_server_response
 
     def deploy_contracts(self, parameters):
         try:
@@ -159,17 +180,24 @@ class Command_Handler(Response_Codes):
             return response
         except KeyError as missing_args:
             return self.invalid_command_response
+        except Exception as exception:
+            return self.invalid_server_response
         
-    def run_transaction(self, parameters): #TODO
+    def run_transaction(self, parameters): 
         try:
-            user, workspace, account, network = parameters["user"], parameters["workspace"], parameters["account"], parameters["network"]
-            return {"result": self.codes.SUCCESS, "detail": "command executed successfully"}
+            user, workspace, account, network, file = parameters["user"], parameters["workspace"], parameters["account"], parameters["network"], parameters["file"]
+            path_to_transaction_file = f"./cadence/transactions/{file}"
+            command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && flow transactions send {path_to_transaction_file} --proposer {account} --authorizer {account} --payer {account} --filter payload --network {network}"
+            build_response = self.execute_shell_command(command=command)
+            return build_response
         except KeyError as missing_args:
             return self.invalid_command_response
+        except Exception as exception:
+            return self.invalid_server_response
         
     def create_account(self, parameters):
         try:
-            user, workspace, account_name = parameters["user"], parameters["workspace"], parameters["account_name"]
+            user, workspace, account_name, network = parameters["user"], parameters["workspace"], parameters["account_name"], parameters["network"]
             command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && flow keys generate --output json --save ./keys.json"
             response = self.execute_shell_command(command=command)
             print("First command response: ", response)
@@ -188,7 +216,8 @@ class Command_Handler(Response_Codes):
                         generated_keys = json.load(keys_file)
                         pub_key = generated_keys.get("public")
                         priv_key = generated_keys.get("private")
-                        command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && flow accounts create --key {pub_key} --signer wallet-creator-account --network testnet --config-path flow.json --output json --save new-wallet.json"
+                        signer = "wallet-creator-account" if network == "testnet" else "emulator-account"
+                        command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && flow accounts create --key {pub_key} --signer {signer} --network {network} --config-path flow.json --output json --save new-wallet.json"
                         response = self.execute_shell_command(command=command)
                         if response["result"] == self.SUCCESS:
                             with open(os.path.join(os.getcwd(), self.BASE_DIR, user, workspace, "new-wallet.json"), "r", encoding='utf8') as new_wallet_file:
@@ -215,8 +244,10 @@ class Command_Handler(Response_Codes):
             return response
         except KeyError as missing_args:
             return self.invalid_command_response
-            
-    def run_script(self, parameters): #TODO
+        except Exception as exception:
+            return self.invalid_server_response
+
+    def run_script(self, parameters): 
         try:
             user, workspace, network, file = parameters["user"], parameters["workspace"], parameters["network"], parameters["file"]
             path_to_script = os.path.join("./","cadence", "scripts", file)
@@ -225,11 +256,19 @@ class Command_Handler(Response_Codes):
             return response
         except KeyError as missing_args:
             return self.invalid_command_response
+        except Exception as exception:
+            return self.invalid_server_response
     
     def execute_shell_command(self, command):
         process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
         stdout, stderr = process.communicate()
         return {"result": self.SUCCESS if not stderr else self.ERROR, "detail": stdout, "error": stderr}
 
+    def start_emulator(self):
+        print(os.getcwd())
+        command = f"cd rootuser-project && flow emulator"
+        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True, encoding='utf-8')
+        stdout, stderr = process.communicate()
+        print({"result": self.SUCCESS if not stderr else self.ERROR, "detail": stdout, "error": stderr}) 
         
 

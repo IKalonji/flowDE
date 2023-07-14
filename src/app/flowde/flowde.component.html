@@ -95,7 +95,7 @@
         </p-dialog>
         <p-dialog header="Manage Workspace" [(visible)]="createOrDeleteWorkspaceDialogVisible" [style]="{ width: '50vw' }">
             <div class="flex py-2 justify-content-center">
-                <input type="text" pInputText [(ngModel)]="createOrDeleteWorkspaceDialogInput" placeholder="Workspace name" disabled="{{createOrDeleteWorkspaceDialogLoading}}"/>
+                <input type="text" class="p-2" pInputText [(ngModel)]="createOrDeleteWorkspaceDialogInput" placeholder="Workspace name" disabled="{{createOrDeleteWorkspaceDialogLoading}}"/>
                 <div>
                     <p-button label="Create" styleClass="p-button-raised p-button-text" class="p-2" *ngIf="!createOrDeleteWorkspaceDialogLoading" (onClick)="createWorkspace()"></p-button>
                     <p-button label="Delete" styleClass="p-button-raised p-button-text" class="p-2" *ngIf="!createOrDeleteWorkspaceDialogLoading" (onClick)="deleteWorkspace()"></p-button>    

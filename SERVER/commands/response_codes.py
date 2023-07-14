@@ -10,3 +10,4 @@ class Response_Codes():
         self.workspace_exists = "Workspace exists, delete to recreate"
         self.no_file = "No file found with the name provided"
         self.invalid_command = "Command not found"
+        self.invalid_server = "Exception raised, Please check your input"
