@@ -28,7 +28,7 @@ class Command_Handler(Response_Codes):
         self.invalid_server_response = {"result": self.ERROR, "detail": self.invalid_server, "error": "Server erred @ FLOW CLI inputs, please check your input values"}
         self.WALLET_CREATOR_ACCOUNT = "0x7721b98bbf12fcb9"
         self.WALLET_CREATOR_KEY = "4d2834338c2a35aca39ab8be94b45fc5d5722975a1114e0f3dac80ee32813e5e"
-        self.start_emulator()
+        #self.start_emulator()
 
     def handle_request(self, command, request):
         try:
