@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  base_url: "http://localhost:5555/v1/flowde/"
+  base_url: "https://jointlabs.xyz/v1/flowde/"
 };
 
 /*
