@@ -109,7 +109,7 @@ export class FlowdeService {
   }
   
   deployContract(user: string|undefined, workspace:string|undefined, account_name: string, network: string = 'testnet', file:string){
-    let url = this.BASE_URL + "deploy_contract";
+    let url = this.BASE_URL + "deploy_contracts";
     let body = {
       "user": user,
       "workspace": workspace,

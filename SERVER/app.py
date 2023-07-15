@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
+from logging import log
 
 from commands.command_handler import Command_Handler
 

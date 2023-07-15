@@ -67,8 +67,8 @@
         <div class="col-9" style="flex: 1;">
             <div class="grid grid-nogutter h-full">
                 <div class="col-12">
-                    <div class="text-left border-noround h-full border-1">
-                        <p-editor [ngModel]="dataFromSelectedFile" (onTextChange)="textChangeEvent($event)" [style]="{ height: '320px' , border: 'none'}" disabled="disableEditor">
+                    <div class="flex-grow-0 text-left border-noround h-full border-1">
+                        <p-editor [ngModel]="dataFromSelectedFile" (onTextChange)="textChangeEvent($event)" [style]="{}" style="white-space: pre-wrap; max-height: 400px; border: none"  disabled="disableEditor">
                             <ng-template pTemplate="header">
                                 <span class="ql-formats">
                                     <label>Editor</label>

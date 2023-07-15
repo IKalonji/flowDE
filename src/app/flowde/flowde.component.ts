@@ -115,7 +115,7 @@ export class FlowdeComponent implements OnInit {
               this.createOrDeleteWorkspaceDialogLoading = false;
               this.createOrDeleteWorkspaceDialogVisible = false;
               this.getWorkspace();
-              this.output = `Result:${data.result} -- Detail:${data.result} --Error:${data.error ? data.error : "None"}`
+              this.output = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
             }
           )
   }
@@ -129,7 +129,7 @@ export class FlowdeComponent implements OnInit {
               this.createOrDeleteWorkspaceDialogLoading = false;
               this.createOrDeleteWorkspaceDialogVisible = false;
               this.getWorkspace();
-              this.output = `Result:${data.result} -- Detail:${data.result} --Error:${data.error ? data.error : "None"}`
+              this.output = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
             }
           )
   }
@@ -143,7 +143,7 @@ export class FlowdeComponent implements OnInit {
     this.createAccountLoading = !this.createAccountLoading
     this.flowdeService.createAccount(this.walletService.wallet, this.newAccountWorkspace, this.account_name, this.network.name).subscribe(
       (data: any) => {
-        this.output = `Result:${data.result} -- Detail:${data.result} --Error:${data.error ? data.error : "None"} -- Data:${data.data}`
+        this.output = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"} -- Data:${data.data}`
         this.getWorkspace();
       }
     )
@@ -171,7 +171,7 @@ export class FlowdeComponent implements OnInit {
     console.log(this.selectedFile?.data);
     this.flowdeService.saveToFile(this.walletService.wallet, this.selectedFile.parent?.type, this.selectedFile.parent?.label?.toLowerCase(), this.selectedFile.label, this.editorText).subscribe(
       (data:any)=>{
-        this.output = `Result:${data.result} -- Detail:${data.result} --Error:${data.error ? data.error : "None"}`
+        this.output = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
       }
     )
   }
@@ -180,7 +180,7 @@ export class FlowdeComponent implements OnInit {
     console.log("New File");    
     this.flowdeService.createFile(this.walletService.wallet, workspace, this.folder.name, this.filename).subscribe(
       (data:any)=>{
-        this.output = `Result:${data.result} -- Detail:${data.result} --Error:${data.error ? data.error : "None"}`
+        this.output = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
         this.getWorkspace();
         this.fileManagement = false;
       }
@@ -191,7 +191,7 @@ export class FlowdeComponent implements OnInit {
     console.log("Delete File");
     this.flowdeService.deleteFile(this.walletService.wallet, workspace, this.folder.name, this.filename).subscribe(
       (data:any)=>{
-        this.output = `Result:${data.result} -- Detail:${data.result} --Error:${data.error ? data.error : "None"}`
+        this.output = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
         this.getWorkspace();
         this.fileManagement = false;
       }
@@ -208,7 +208,7 @@ export class FlowdeComponent implements OnInit {
     if(this.selectedFile.parent?.label == "Contracts" && this.selectedFile.label?.endsWith(".cdc")){
       this.flowdeService.deployContract(this.walletService.wallet, this.selectedFile.parent.type, this.account_name, this.network.name, this.selectedFile.label).subscribe(
         (data:any)=>{
-          this.output = `Result:${data.result} -- Detail:${data.result} --Error:${data.error ? data.error : "None"}`
+          this.output = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
           this.resetContractFunctionVariables()
         }
       )
@@ -224,7 +224,7 @@ export class FlowdeComponent implements OnInit {
     if(this.selectedFile.parent?.label == "Scripts" && this.selectedFile.label?.endsWith(".cdc")){
       this.flowdeService.runScript(this.walletService.wallet, this.selectedFile.parent.type, this.network.name, this.selectedFile.label).subscribe(
         (data:any)=>{
-          this.output = `Result:${data.result} -- Detail:${data.result} --Error:${data.error ? data.error : "None"}`
+          this.output = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
           this.resetContractFunctionVariables()
         }
       )
@@ -240,7 +240,7 @@ export class FlowdeComponent implements OnInit {
     if(this.selectedFile.parent?.label == "Transactions" && this.selectedFile.label?.endsWith(".cdc")){
       this.flowdeService.runTransaction(this.walletService.wallet, this.selectedFile.parent.type, this.network.name, this.selectedFile.label, this.account_name).subscribe(
         (data:any)=>{
-          this.output = `Result:${data.result} -- Detail:${data.result} --Error:${data.error ? data.error : "None"}`
+          this.output = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
           this.resetContractFunctionVariables()
         }
       )

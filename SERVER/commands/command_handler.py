@@ -1,6 +1,7 @@
 import json
 import subprocess
 import os
+from logging import log
 
 from commands.response_codes import Response_Codes
 
@@ -28,7 +29,7 @@ class Command_Handler(Response_Codes):
         self.invalid_server_response = {"result": self.ERROR, "detail": self.invalid_server, "error": "Server erred @ FLOW CLI inputs, please check your input values"}
         self.WALLET_CREATOR_ACCOUNT = "0x7721b98bbf12fcb9"
         self.WALLET_CREATOR_KEY = "4d2834338c2a35aca39ab8be94b45fc5d5722975a1114e0f3dac80ee32813e5e"
-        #self.start_emulator()
+        # self.start_emulator()
 
     def handle_request(self, command, request):
         try:
@@ -89,8 +90,6 @@ class Command_Handler(Response_Codes):
             users_folder_path = os.path.join(os.getcwd(),"users", user)
             workspace_builder = []
             userDir = os.listdir(users_folder_path)
-            print(userDir)
-            print(len(userDir))
             for workspace in userDir :
                 new_workspace = {
                     "workspace": workspace,
@@ -151,7 +150,7 @@ class Command_Handler(Response_Codes):
     def add_to_file(self, parameters):
         try:
             user, workspace, folder, file, contents = parameters["user"], parameters["workspace"], parameters["folder"], parameters["file"], parameters["contents"]
-            with open(os.path.join(os.getcwd(),self.BASE_DIR, user, workspace, "cadence", folder, file), "w") as file:
+            with open(os.path.join(os.getcwd(),self.BASE_DIR, user, workspace, "cadence", folder, file), "w", encoding="utf-8") as file:
                 file.write(contents)
                 file.close()
             return {"result": self.SUCCESS, "detail": "File written to disk"}
@@ -177,6 +176,7 @@ class Command_Handler(Response_Codes):
             path_to_contract = os.path.join("./","cadence", "contracts", file)
             command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && flow accounts add-contract {path_to_contract} --network {network} --signer {account}"
             response = self.execute_shell_command(command=command)
+            print("RESPONSE ", response)
             return response
         except KeyError as missing_args:
             return self.invalid_command_response
@@ -260,8 +260,10 @@ class Command_Handler(Response_Codes):
             return self.invalid_server_response
     
     def execute_shell_command(self, command):
-        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
+        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, encoding='utf8', text=False)
         stdout, stderr = process.communicate()
+        print("SOMETHING>>>>>>>>>>>>>>")
+        print(f"STDOUT {stdout}\nSTDERR{stderr}")
         return {"result": self.SUCCESS if not stderr else self.ERROR, "detail": stdout, "error": stderr}
 
     def start_emulator(self):
