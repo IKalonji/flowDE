@@ -1,22 +1,21 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { TreeNode } from 'primeng/api';
 import { WalletService } from '../services/wallet.service';
 import { FlowdeService } from '../services/flowde.service';
 import { Router } from '@angular/router';
+import * as ace from "ace-builds";
 
 @Component({
   selector: 'app-flowde',
   templateUrl: './flowde.component.html',
   styleUrls: ['./flowde.component.css']
 })
-export class FlowdeComponent implements OnInit {
+export class FlowdeComponent implements OnInit, AfterViewInit {
+  @ViewChild("editor") private editor: ElementRef<HTMLElement>;
 
-  dataFromSelectedFile:string = "Welcome to flowDE\nTo begin create a new workspace, which is a project that will contain the folders needed to begin developing on flow.";
+  instructions:string = "Welcome to flowDE\nTo begin create a new workspace, which is a project that will contain the folders needed to begin developing on flow.";
   workspaces: TreeNode[][] = [];
   selectedFile: TreeNode = {};
-
-  disableEditor = true;
-  editorText = this.dataFromSelectedFile;
 
   output: string = "Output displayed here!"
 
@@ -53,6 +52,8 @@ export class FlowdeComponent implements OnInit {
   createAccountDialogVisible = false;
   newAccountWorkspace = "";
 
+  aceEditor: any;
+
   constructor(private walletService: WalletService, private flowdeService: FlowdeService, private router: Router) {}
 
   ngOnInit(): void {
@@ -78,18 +79,23 @@ export class FlowdeComponent implements OnInit {
         }
       });
   }
+
+  ngAfterViewInit(): void {
+    ace.config.set("fontSize", "14px");
+    this.aceEditor = ace.edit(this.editor.nativeElement);
+    this.aceEditor.session.setValue(this.instructions);
+  }
   
   nodeExpand(event:any){
     console.log("EXPAND Event: ", event);
     console.log(this.selectedFile);
-    this.dataFromSelectedFile = this.selectedFile?.data;
+    this.aceEditor.setValue(this.selectedFile.data);
   }
   
   nodeSelect(event:any){
     console.log("SELECT Event: ", event);
     console.log("SELECTED FILE: ", this.selectedFile);
-    this.dataFromSelectedFile = this.selectedFile?.data;
-    this.disableEditor = false;
+    this.aceEditor.setValue(this.selectedFile.data);
   }
 
   workspace(){
@@ -160,16 +166,11 @@ export class FlowdeComponent implements OnInit {
     this.currentManagementSelection = action;
   }
 
-  textChangeEvent(event:any){
-    console.log(event);
-    this.editorText = event.textValue;
-  }
-
   saveFile(){
     console.log("Save file");
-    this.selectedFile.data = this.editorText;
-    console.log(this.selectedFile?.data);
-    this.flowdeService.saveToFile(this.walletService.wallet, this.selectedFile.parent?.type, this.selectedFile.parent?.label?.toLowerCase(), this.selectedFile.label, this.editorText).subscribe(
+    let valueFromText = this.aceEditor.getValue()
+    console.log(valueFromText);
+    this.flowdeService.saveToFile(this.walletService.wallet, this.selectedFile.parent?.type, this.selectedFile.parent?.label?.toLowerCase(), this.selectedFile.label, valueFromText).subscribe(
       (data:any)=>{
         this.output = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
       }
