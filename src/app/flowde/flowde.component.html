@@ -100,7 +100,7 @@
                 <i class="pi pi-spin pi-cog" *ngIf="createAccountLoading"></i>
             </div>
         </p-dialog>
-        <p-dialog header="EXECUTION OUTPUT" [(visible)]="executionOutputDialog" [style]="{ width: '50vw' }" [closable]=false [dismissableMask]=false>
+        <p-dialog header="EXECUTION OUTPUT" [(visible)]="executionOutputDialog" [style]="{ width: '80vw' }" [closable]=false [dismissableMask]=false>
             <div class="flex py-2 justify-content-center">
                 <i class="pi pi-spin pi-spinner" *ngIf="executionLoading" style="color: green" style="font-size: 3.5rem"></i>
                 <p>{{executionOutput}}</p>
