@@ -23,13 +23,11 @@ class Command_Handler(Response_Codes):
             "create_user": self.create_user,
             "is_user": self.is_user
         }
-        # start emulator
         self.BASE_DIR = "users"
         self.invalid_command_response = {"result": self.ERROR, "detail": self.invalid_command}
         self.invalid_server_response = {"result": self.ERROR, "detail": self.invalid_server, "error": "Server erred @ FLOW CLI inputs, please check your input values"}
         self.WALLET_CREATOR_ACCOUNT = "0x7721b98bbf12fcb9"
         self.WALLET_CREATOR_KEY = "4d2834338c2a35aca39ab8be94b45fc5d5722975a1114e0f3dac80ee32813e5e"
-        # self.start_emulator()
 
     def handle_request(self, command, request):
         try:
@@ -56,6 +54,8 @@ class Command_Handler(Response_Codes):
             user = parameters["user"]
             command = f"cd {self.BASE_DIR}  && mkdir {user}" #
             response = self.execute_shell_command(command=command)
+            if response["result"] == "OK":
+                response['detail'] = "User created successfully"
             return response
         except KeyError as missing_args:
             return self.invalid_command_response
@@ -67,6 +67,8 @@ class Command_Handler(Response_Codes):
             user, workspace = parameters["user"], parameters["workspace"]
             command = f"cd {self.BASE_DIR} && cd {user} && flow setup {workspace}"
             response = self.execute_shell_command(command=command)
+            if response["result"] == "OK":
+                response['detail'] = f"Workspace {workspace} created successfully"
             return response
         except KeyError as missing_args:
             return self.invalid_command_response
@@ -78,6 +80,8 @@ class Command_Handler(Response_Codes):
             user, workspace = parameters["user"], parameters["workspace"]
             command = f"cd {self.BASE_DIR} && cd {user} && rm -rf {workspace}"
             response = self.execute_shell_command(command=command)
+            if response["result"] == "OK":
+                response['detail'] = f"Workspace {workspace} deleted successfully"
             return response
         except KeyError as missing_args:
             return self.invalid_command_response
@@ -119,7 +123,7 @@ class Command_Handler(Response_Codes):
                                         }
                                     )
                 workspace_builder.append(new_workspace)
-            return {"result": self.SUCCESS, "detail": "command executed successfully", "data": workspace_builder}
+            return {"result": self.SUCCESS, "detail": "Retrieved Workspaces", "data": workspace_builder}
         except KeyError as missing_args:
             return self.invalid_command_response
         except Exception as exception:
@@ -130,6 +134,8 @@ class Command_Handler(Response_Codes):
             user, workspace, folder, file = parameters["user"], parameters["workspace"], parameters["folder"], parameters["file"]
             command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && cd cadence && cd {folder} && touch {file}"
             response = self.execute_shell_command(command=command)
+            if response["result"] == "OK":
+                response['detail'] = f"File {file} created successfully"
             return response
         except KeyError as missing_args:
             return self.invalid_command_response
@@ -153,7 +159,7 @@ class Command_Handler(Response_Codes):
             with open(os.path.join(os.getcwd(),self.BASE_DIR, user, workspace, "cadence", folder, file), "w", encoding="utf-8") as file:
                 file.write(contents)
                 file.close()
-            return {"result": self.SUCCESS, "detail": "File written to disk"}
+            return {"result": self.SUCCESS, "detail": f"File written to {folder}"}
         except KeyError as missing_args:
             return self.invalid_command_response
         except Exception as exception:
@@ -164,6 +170,8 @@ class Command_Handler(Response_Codes):
             user, workspace, folder, file = parameters["user"], parameters["workspace"], parameters["folder"], parameters["file"]
             command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && cd cadence && cd {folder} && rm -rf {file}"
             response = self.execute_shell_command(command=command)
+            if response["result"] == "OK":
+                response['detail'] = f"File: {file} deleted successfully"
             return response
         except KeyError as missing_args:
             return self.invalid_command_response
@@ -176,7 +184,8 @@ class Command_Handler(Response_Codes):
             path_to_contract = os.path.join("./","cadence", "contracts", file)
             command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && flow accounts add-contract {path_to_contract} --network {network} --signer {account}"
             response = self.execute_shell_command(command=command)
-            print("RESPONSE ", response)
+            if response["result"] == "OK":
+                response['detail'] = f"{file} deployed to {account} on {network} successfully"
             return response
         except KeyError as missing_args:
             return self.invalid_command_response
@@ -200,7 +209,6 @@ class Command_Handler(Response_Codes):
             user, workspace, account_name, network = parameters["user"], parameters["workspace"], parameters["account_name"], parameters["network"]
             command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && flow keys generate --output json --save ./keys.json"
             response = self.execute_shell_command(command=command)
-            print("First command response: ", response)
             if response["result"] == self.SUCCESS:
                 with open(os.path.join(os.getcwd(), self.BASE_DIR, user, workspace, "flow.json"), "r", encoding='utf8') as file:
                     flow_config = json.load(file)
@@ -241,6 +249,8 @@ class Command_Handler(Response_Codes):
                         keys_file.close()
             self.execute_shell_command(f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && rm -rf ./keys.json")
             self.execute_shell_command(f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && rm -rf ./new-wallet.json")
+            if response["result"] == "OK":
+                response['detail'] = f"Account {account_name} created and added to flow.json"
             return response
         except KeyError as missing_args:
             return self.invalid_command_response
@@ -262,15 +272,6 @@ class Command_Handler(Response_Codes):
     def execute_shell_command(self, command):
         process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, encoding='utf8', text=False)
         stdout, stderr = process.communicate()
-        print("SOMETHING>>>>>>>>>>>>>>")
-        print(f"STDOUT {stdout}\nSTDERR{stderr}")
         return {"result": self.SUCCESS if not stderr else self.ERROR, "detail": stdout, "error": stderr}
-
-    def start_emulator(self):
-        print(os.getcwd())
-        command = f"cd rootuser-project && flow emulator"
-        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True, encoding='utf-8')
-        stdout, stderr = process.communicate()
-        print({"result": self.SUCCESS if not stderr else self.ERROR, "detail": stdout, "error": stderr}) 
         
 

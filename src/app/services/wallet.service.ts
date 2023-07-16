@@ -12,8 +12,9 @@ export class WalletService {
   constructor() {
     fcl.config({
       "discovery.wallet": "https://fcl-discovery.onflow.org/testnet/authn", // Endpoint set to Testnet
-      "app.detail.title": "flowDE, the developer dApp",
       'accessNode.api': 'https://rest-testnet.onflow.org',
+      "app.detail.title": "flowDE",
+      "app.detail.icon": "https://github.com/IKalonji/flowDE/blob/main/src/assets/flow-logo.png",
     })
   }
 
