@@ -54,6 +54,10 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
 
   aceEditor: any;
 
+  executionOutputDialog = false;
+  executionLoading = true;
+  executionOutput = "";
+
   constructor(private walletService: WalletService, private flowdeService: FlowdeService, private router: Router) {}
 
   ngOnInit(): void {
@@ -115,13 +119,15 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
   createWorkspace(){
     this.createOrDeleteWorkspaceDialogLoading = true;
     console.log("executing create");
+    this.showExecutionOutput()
           this.flowdeService.createWorkspace(this.walletService.wallet, this.createOrDeleteWorkspaceDialogInput).subscribe(
             (data: any)=>{
               console.log(data.result);
               this.createOrDeleteWorkspaceDialogLoading = false;
               this.createOrDeleteWorkspaceDialogVisible = false;
               this.getWorkspace();
-              this.output = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
+              this.executionOutput = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
+              this.executionLoading = false
             }
           )
   }
@@ -129,13 +135,15 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
   deleteWorkspace(){
     this.createOrDeleteWorkspaceDialogLoading = true;
     console.log("executing delete");
+    this.showExecutionOutput()
           this.flowdeService.deleteWorkspace(this.walletService.wallet, this.createOrDeleteWorkspaceDialogInput).subscribe(
             (data: any)=>{
               console.log(data.result);
               this.createOrDeleteWorkspaceDialogLoading = false;
               this.createOrDeleteWorkspaceDialogVisible = false;
               this.getWorkspace();
-              this.output = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
+              this.executionOutput = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
+              this.executionLoading = false
             }
           )
   }
@@ -147,10 +155,15 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
 
   createAccount(){
     this.createAccountLoading = !this.createAccountLoading
+    this.showExecutionOutput()
     this.flowdeService.createAccount(this.walletService.wallet, this.newAccountWorkspace, this.account_name, this.network.name).subscribe(
       (data: any) => {
-        this.output = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"} -- Data:${data.data}`
+        this.executionOutput = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"} -- Data:${data.data}`
         this.getWorkspace();
+        this.createAccountLoading = false;
+        this.createAccountDialogVisible = false;
+        this.newAccountWorkspace = "";
+        this.executionLoading = false
       }
     )
   }
@@ -170,31 +183,37 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
     console.log("Save file");
     let valueFromText = this.aceEditor.getValue()
     console.log(valueFromText);
+    this.showExecutionOutput()
     this.flowdeService.saveToFile(this.walletService.wallet, this.selectedFile.parent?.type, this.selectedFile.parent?.label?.toLowerCase(), this.selectedFile.label, valueFromText).subscribe(
       (data:any)=>{
-        this.output = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
+        this.executionOutput = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
+        this.executionLoading = false
       }
     )
   }
 
   newFile(workspace:string | undefined){
-    console.log("New File");    
+    console.log("New File");  
+    this.showExecutionOutput()  
     this.flowdeService.createFile(this.walletService.wallet, workspace, this.folder.name, this.filename).subscribe(
       (data:any)=>{
-        this.output = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
+        this.executionOutput = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
         this.getWorkspace();
         this.fileManagement = false;
+        this.executionLoading = false
       }
     )
   }
 
   deleteFile(workspace: string | undefined){
     console.log("Delete File");
+    this.showExecutionOutput()
     this.flowdeService.deleteFile(this.walletService.wallet, workspace, this.folder.name, this.filename).subscribe(
       (data:any)=>{
-        this.output = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
+        this.executionOutput = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
         this.getWorkspace();
         this.fileManagement = false;
+        this.executionLoading = false
       }
     )
   }
@@ -206,48 +225,57 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
 
   deployContract(){
     console.log("Deploy Contract");
+    this.showExecutionOutput()
     if(this.selectedFile.parent?.label == "Contracts" && this.selectedFile.label?.endsWith(".cdc")){
       this.flowdeService.deployContract(this.walletService.wallet, this.selectedFile.parent.type, this.account_name, this.network.name, this.selectedFile.label).subscribe(
         (data:any)=>{
-          this.output = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
+          this.executionOutput = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
           this.resetContractFunctionVariables()
+          this.executionLoading = false
         }
       )
     }
     else {
-      this.output = `Result: ERROR -- Detail: SELECT A CONTRACT FILE BY CLICKING ON IT --Error: NO CONTRACT SELECTED`
+      this.executionOutput = `Result: ERROR -- Detail: SELECT A CONTRACT FILE BY CLICKING ON IT --Error: NO CONTRACT SELECTED`
       this.resetContractFunctionVariables()
+      this.executionLoading = false
     }
   }
 
   runScript(){
     console.log("Run Script");
+    this.showExecutionOutput()
     if(this.selectedFile.parent?.label == "Scripts" && this.selectedFile.label?.endsWith(".cdc")){
       this.flowdeService.runScript(this.walletService.wallet, this.selectedFile.parent.type, this.network.name, this.selectedFile.label).subscribe(
         (data:any)=>{
-          this.output = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
+          this.executionOutput = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
+          this.executionLoading = false
           this.resetContractFunctionVariables()
         }
       )
     }
     else{
-      this.output = `Result: ERROR -- Detail: SELECT A SCRIPT FILE BY CLICKING ON IT --Error: NO SCRIPT SELECTED`
+      this.executionOutput = `Result: ERROR -- Detail: SELECT A SCRIPT FILE BY CLICKING ON IT --Error: NO SCRIPT SELECTED`
+      this.executionLoading = false
       this.resetContractFunctionVariables()
     }
   }
 
   runTransaction(){
     console.log("Run Transaction");
+    this.showExecutionOutput()
     if(this.selectedFile.parent?.label == "Transactions" && this.selectedFile.label?.endsWith(".cdc")){
       this.flowdeService.runTransaction(this.walletService.wallet, this.selectedFile.parent.type, this.network.name, this.selectedFile.label, this.account_name).subscribe(
         (data:any)=>{
-          this.output = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
+          this.executionOutput = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
+          this.executionLoading = false
           this.resetContractFunctionVariables()
         }
       )
     }
     else{
-      this.output = `Result: ERROR -- Detail: SELECT A TRANSACTION FILE BY CLICKING ON IT --Error: NO TRANSACTION SELECTED`
+      this.executionOutput = `Result: ERROR -- Detail: SELECT A TRANSACTION FILE BY CLICKING ON IT --Error: NO TRANSACTION SELECTED`
+      this.executionLoading = false;
       this.resetContractFunctionVariables()
     }
   }
@@ -345,5 +373,15 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
     this.contractFunctionSelection = "";
     this.account_name = "";
     this.network = {name:""}
+  }
+
+  showExecutionOutput(){
+    this.executionOutputDialog = true;
+  }
+
+  closeExecutionOutput(){
+    this.executionOutputDialog = false;
+    this.executionLoading = true;
+    this.executionOutput = "";
   }
 }
