@@ -62,6 +62,9 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
       this.dialogMsg = "Checking if user exists using the wallet used to sign in"
+      if(!this.walletService.wallet){
+        this.router.navigate(['/'])
+      }
       this.flowdeService.isUser(this.walletService.wallet).subscribe((user:any)=>{
         console.log("response from isuser", user);
         if(user.result == "OK"){
