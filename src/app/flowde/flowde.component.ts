@@ -4,11 +4,13 @@ import { WalletService } from '../services/wallet.service';
 import { FlowdeService } from '../services/flowde.service';
 import { Router } from '@angular/router';
 import * as ace from "ace-builds";
+import { ConfirmationService, MessageService, ConfirmEventType } from 'primeng/api';
 
 @Component({
   selector: 'app-flowde',
   templateUrl: './flowde.component.html',
-  styleUrls: ['./flowde.component.css']
+  styleUrls: ['./flowde.component.css'],
+  providers: [ConfirmationService, MessageService]
 })
 export class FlowdeComponent implements OnInit, AfterViewInit {
   @ViewChild("editor") private editor: ElementRef<HTMLElement>;
@@ -58,11 +60,12 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
   executionLoading = true;
   executionOutput = "";
 
-  constructor(private walletService: WalletService, private flowdeService: FlowdeService, private router: Router) {}
+  constructor(private walletService: WalletService, private flowdeService: FlowdeService, private router: Router, private confirmationService: ConfirmationService, private toast: MessageService) {}
 
   ngOnInit(): void {
       this.dialogMsg = "Checking if user exists using the wallet used to sign in"
       if(!this.walletService.wallet){
+        this.showToast(false)
         this.router.navigate(['/'])
       }
       this.flowdeService.isUser(this.walletService.wallet).subscribe((user:any)=>{
@@ -74,6 +77,7 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
             this.buildWorkspaceTreeObject(workspace.data)
             this.dialogMsg = "";
             this.setupDialogVisible = false;
+            if(this.workspaces.length == 0) this.showInfoPopup("Get started", "You do not have any active workspaces, create a workspace to get started.")
           })
         }
         else { 
@@ -82,6 +86,7 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
             console.log(newUser)
             this.dialogMsg = "User created";
             this.setupDialogVisible = false;
+            this.showInfoPopup("Get started", "You do not have any active workspaces, create a workspace to get started.")
           })
         }
       });
@@ -126,11 +131,13 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
           this.flowdeService.createWorkspace(this.walletService.wallet, this.createOrDeleteWorkspaceDialogInput).subscribe(
             (data: any)=>{
               console.log(data.result);
+              this.showToast(data.result == "OK")
               this.createOrDeleteWorkspaceDialogLoading = false;
               this.createOrDeleteWorkspaceDialogVisible = false;
               this.getWorkspace();
               this.executionOutput = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
               this.executionLoading = false
+              this.showInfoPopup("Accounts", "Default emulator account has been created and added to flow.json use that or create another for deployments. Create an account on testnet network by clicking the create account button if you plan on deploying to testnet.")
             }
           )
   }
@@ -142,6 +149,7 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
           this.flowdeService.deleteWorkspace(this.walletService.wallet, this.createOrDeleteWorkspaceDialogInput).subscribe(
             (data: any)=>{
               console.log(data.result);
+              this.showToast(data.result == "OK")
               this.createOrDeleteWorkspaceDialogLoading = false;
               this.createOrDeleteWorkspaceDialogVisible = false;
               this.getWorkspace();
@@ -161,18 +169,21 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
     this.showExecutionOutput()
     this.flowdeService.createAccount(this.walletService.wallet, this.newAccountWorkspace, this.account_name, this.network.name).subscribe(
       (data: any) => {
+        this.showToast(data.result == "OK")
         this.executionOutput = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"} -- Data:${data.data}`
         this.getWorkspace();
         this.createAccountLoading = false;
         this.createAccountDialogVisible = false;
         this.newAccountWorkspace = "";
-        this.executionLoading = false
+        this.executionLoading = false,
+        this.showInfoPopup("Faucet", "Follow the flow faucet link to fund your testnet account, ensure that you prefix with '0x' when using the faucet: https://testnet-faucet.onflow.org/")
       }
     )
   }
 
   logout(){
     console.log("Logout");
+    this.showToast(true)
     this.walletService.disconnect()
     this.router.navigate([""]);
   }
@@ -189,6 +200,7 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
     this.showExecutionOutput()
     this.flowdeService.saveToFile(this.walletService.wallet, this.selectedFile.parent?.type, this.selectedFile.parent?.label?.toLowerCase(), this.selectedFile.label, valueFromText).subscribe(
       (data:any)=>{
+        this.showToast(data.result == "OK")
         this.executionOutput = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
         this.executionLoading = false
       }
@@ -200,10 +212,12 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
     this.showExecutionOutput()  
     this.flowdeService.createFile(this.walletService.wallet, workspace, this.folder.name, this.filename).subscribe(
       (data:any)=>{
+        this.showToast(data.result == "OK")
         this.executionOutput = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
         this.getWorkspace();
         this.fileManagement = false;
         this.executionLoading = false
+        this.showInfoPopup("File Management", "Make sure to save file changes before switching files/folders or changes will be lost!")
       }
     )
   }
@@ -213,10 +227,12 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
     this.showExecutionOutput()
     this.flowdeService.deleteFile(this.walletService.wallet, workspace, this.folder.name, this.filename).subscribe(
       (data:any)=>{
+        this.showToast(data.result == "OK")
         this.executionOutput = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
         this.getWorkspace();
         this.fileManagement = false;
         this.executionLoading = false
+        this.showInfoPopup("Delete", "Deleted files cannot be recovered!")
       }
     )
   }
@@ -232,6 +248,7 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
     if(this.selectedFile.parent?.label == "Contracts" && this.selectedFile.label?.endsWith(".cdc")){
       this.flowdeService.deployContract(this.walletService.wallet, this.selectedFile.parent.type, this.account_name, this.network.name, this.selectedFile.label).subscribe(
         (data:any)=>{
+          this.showToast(data.result == "OK")
           this.executionOutput = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
           this.resetContractFunctionVariables()
           this.executionLoading = false
@@ -251,6 +268,7 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
     if(this.selectedFile.parent?.label == "Scripts" && this.selectedFile.label?.endsWith(".cdc")){
       this.flowdeService.runScript(this.walletService.wallet, this.selectedFile.parent.type, this.network.name, this.selectedFile.label).subscribe(
         (data:any)=>{
+          this.showToast(data.result == "OK")
           this.executionOutput = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
           this.executionLoading = false
           this.resetContractFunctionVariables()
@@ -270,6 +288,7 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
     if(this.selectedFile.parent?.label == "Transactions" && this.selectedFile.label?.endsWith(".cdc")){
       this.flowdeService.runTransaction(this.walletService.wallet, this.selectedFile.parent.type, this.network.name, this.selectedFile.label, this.account_name).subscribe(
         (data:any)=>{
+          this.showToast(data.result == "OK")
           this.executionOutput = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
           this.executionLoading = false
           this.resetContractFunctionVariables()
@@ -387,4 +406,22 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
     this.executionLoading = true;
     this.executionOutput = "";
   }
+
+  showInfoPopup(header: string, message: string){
+    this.confirmationService.confirm({
+      message: message,
+      header: header,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'OK',
+      accept: () => {},
+      rejectVisible: false
+    });
+  }
+
+  showToast(success:boolean){
+    let _severity = success ? 'success' : 'error';
+    let _detail = success ? 'Successfully executed' : 'Error occured';
+    this.toast.add({ severity: _severity, summary: 'Result', detail: _detail });
+  }
+
 }

@@ -23,6 +23,8 @@ import { TreeModule } from 'primeng/tree';
 import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
+import { ToastModule } from 'primeng/toast'
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 @NgModule({
   declarations: [
@@ -49,7 +51,9 @@ import { DropdownModule } from 'primeng/dropdown';
     TooltipModule,
     HttpClientModule,
     DialogModule,
-    DropdownModule
+    DropdownModule,
+    ToastModule,
+    ConfirmDialogModule
   ],
   providers: [],
   bootstrap: [AppComponent]
