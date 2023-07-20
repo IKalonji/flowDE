@@ -60,6 +60,9 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
   executionLoading = true;
   executionOutput = "";
 
+  argumentInput: argObject[] = [];
+  getArguments = false;
+
   constructor(private walletService: WalletService, private flowdeService: FlowdeService, private router: Router, private confirmationService: ConfirmationService, private toast: MessageService) {}
 
   ngOnInit(): void {
@@ -245,8 +248,10 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
   deployContract(){
     console.log("Deploy Contract");
     this.showExecutionOutput()
+    this.getArguments = false;
+    let argsList:string[] = this.getContractScriptTransactionArguments()
     if(this.selectedFile.parent?.label == "Contracts" && this.selectedFile.label?.endsWith(".cdc")){
-      this.flowdeService.deployContract(this.walletService.wallet, this.selectedFile.parent.type, this.account_name, this.network.name, this.selectedFile.label).subscribe(
+      this.flowdeService.deployContract(this.walletService.wallet, this.selectedFile.parent.type, this.account_name, this.network.name, this.selectedFile.label, argsList).subscribe(
         (data:any)=>{
           this.showToast(data.result == "OK")
           this.executionOutput = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
@@ -262,11 +267,31 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
     }
   }
 
+  getDeployArguments(){
+    this.getArguments = true;
+  }
+
+  addArgument(){
+    this.argumentInput.push({arg:""})
+    console.log(this.argumentInput)
+  }
+
+  getContractScriptTransactionArguments(){
+    let argsList:string[] = []
+    this.argumentInput.forEach(element => {
+      if (element.arg != "") argsList.push(element.arg);
+    });
+    console.log(argsList);
+    return argsList;
+  }
+
   runScript(){
     console.log("Run Script");
     this.showExecutionOutput()
+    this.getArguments = false;
+    let argsList:string[] = this.getContractScriptTransactionArguments()
     if(this.selectedFile.parent?.label == "Scripts" && this.selectedFile.label?.endsWith(".cdc")){
-      this.flowdeService.runScript(this.walletService.wallet, this.selectedFile.parent.type, this.network.name, this.selectedFile.label).subscribe(
+      this.flowdeService.runScript(this.walletService.wallet, this.selectedFile.parent.type, this.network.name, this.selectedFile.label, argsList).subscribe(
         (data:any)=>{
           this.showToast(data.result == "OK")
           this.executionOutput = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
@@ -285,8 +310,10 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
   runTransaction(){
     console.log("Run Transaction");
     this.showExecutionOutput()
+    this.getArguments = false;
+    let argsList:string[] = this.getContractScriptTransactionArguments()
     if(this.selectedFile.parent?.label == "Transactions" && this.selectedFile.label?.endsWith(".cdc")){
-      this.flowdeService.runTransaction(this.walletService.wallet, this.selectedFile.parent.type, this.network.name, this.selectedFile.label, this.account_name).subscribe(
+      this.flowdeService.runTransaction(this.walletService.wallet, this.selectedFile.parent.type, this.network.name, this.selectedFile.label, this.account_name, argsList).subscribe(
         (data:any)=>{
           this.showToast(data.result == "OK")
           this.executionOutput = `Result:${data.result} -- Detail:${data.detail} --Error:${data.error ? data.error : "None"}`
@@ -395,6 +422,7 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
     this.contractFunctionSelection = "";
     this.account_name = "";
     this.network = {name:""}
+    this.argumentInput = [];
   }
 
   showExecutionOutput(){
@@ -424,4 +452,8 @@ export class FlowdeComponent implements OnInit, AfterViewInit {
     this.toast.add({ severity: _severity, summary: 'Result', detail: _detail });
   }
 
+}
+
+export interface argObject {
+  arg:string
 }

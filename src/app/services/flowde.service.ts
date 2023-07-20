@@ -108,37 +108,40 @@ export class FlowdeService {
     return this.http.post(url, body);
   }
   
-  deployContract(user: string|undefined, workspace:string|undefined, account_name: string, network: string = 'testnet', file:string){
+  deployContract(user: string|undefined, workspace:string|undefined, account_name: string, network: string = 'testnet', file:string, args: string[] = []){
     let url = this.BASE_URL + "deploy_contracts";
     let body = {
       "user": user,
       "workspace": workspace,
       "account_name": account_name,
       "network": network,
-      "file": file
+      "file": file,
+      "args": args
     }
     return this.http.post(url, body)
   }
   
-  runTransaction(user: string|undefined, workspace: string|undefined, network: string, file: string|undefined, account:string){
+  runTransaction(user: string|undefined, workspace: string|undefined, network: string, file: string|undefined, account:string, args: string[] = []){
     let url = this.BASE_URL + "run_transaction";
     let body = {
       "user": user,
       "workspace": workspace,
       "network": network,
       "file": file,
-      "account": account
+      "account": account,
+      "args": args
     }
     return this.http.post(url, body);
   }
 
-  runScript(user: string|undefined, workspace:string|undefined, network:string, file:string){
+  runScript(user: string|undefined, workspace:string|undefined, network:string, file:string, args: string[] = []){
     let url = this.BASE_URL + "run_script";
     let body = {
       "user": user,
       "workspace": workspace,
       "network": network,
-      "file": file
+      "file": file,
+      "args": args
     }
     return this.http.post(url, body);
   }

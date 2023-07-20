@@ -52,9 +52,7 @@
                             <p-dropdown [options]="networks" [(ngModel)]="network" optionLabel="name" placeholder="Network"></p-dropdown>
                         </div>
                         <div class="card flex justify-content-center p-1">
-                            <p-button *ngIf="contractFunctionSelection == 'deploy'" label="Deploy" styleClass="p-button-raised p-button-textp-button-success" class="p-2" (onClick)="deployContract()"></p-button>
-                            <p-button *ngIf="contractFunctionSelection == 'transaction'" label="Transact" styleClass="p-button-raised p-button-text p-button-info" class="p-2" (onClick)="runTransaction()"></p-button>
-                            <p-button *ngIf="contractFunctionSelection == 'script'" label="Run Script" styleClass="p-button-raised p-button-text p-button-help" class="p-2" (onClick)="runScript()"></p-button>
+                            <p-button label="Execute" styleClass="p-button-raised p-button-textp-button-success" class="p-2" (onClick)="getDeployArguments()"></p-button>
                         </div>
                     </div>
                     <div class="card flex justify-content-center p-3">
@@ -105,6 +103,18 @@
                 <i class="pi pi-spin pi-spinner" *ngIf="executionLoading" style="color: green" style="font-size: 3.5rem"></i>
                 <p>{{executionOutput}}</p>
                 <p-button label="CLOSE" styleClass="p-button-raised p-button-info" class="p-2" *ngIf="!executionLoading" (onClick)="closeExecutionOutput()"></p-button> 
+            </div>
+        </p-dialog>
+        <p-dialog header="Argument input" [(visible)]="getArguments" [style]="{ width: '50vw' }" [closable]=true [dismissableMask]=false>
+            <p>Click 'Add Argument' to add an execution argument and submit when done (each time clicked creates a field). Leave blank and submit if no arguments are required. Ensure arguments are in the correct order expected for execution.</p>
+            <div *ngFor="let argument of argumentInput" class="text-center">
+                <input class="p-2 mb-2" type="text" pInputText [(ngModel)]="argument.arg" placeholder="Arg"/>
+            </div>
+            <div class="flex">
+                <p-button label="Add Arg" styleClass="p-button-raised p-button-info" class="p-2" (onClick)="addArgument()"></p-button>
+                <p-button *ngIf="contractFunctionSelection == 'deploy'" label="Run Deploy" styleClass="p-button-raised p-button-success" class="p-2" (onClick)="deployContract()"></p-button>
+                <p-button *ngIf="contractFunctionSelection == 'transaction'" label="Run Transact" styleClass="p-button-raised p-button-info" class="p-2" (onClick)="runTransaction()"></p-button>
+                <p-button *ngIf="contractFunctionSelection == 'script'" label="Run Script" styleClass="p-button-raised p-button-help" class="p-2" (onClick)="runScript()"></p-button>
             </div>
         </p-dialog>
         <p-toast></p-toast>

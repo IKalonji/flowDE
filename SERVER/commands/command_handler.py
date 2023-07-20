@@ -180,9 +180,9 @@ class Command_Handler(Response_Codes):
 
     def deploy_contracts(self, parameters):
         try:
-            user, workspace, account, network, file = parameters["user"], parameters["workspace"], parameters["account_name"], parameters["network"], parameters["file"]
+            user, workspace, account, network, file, args = parameters["user"], parameters["workspace"], parameters["account_name"], parameters["network"], parameters["file"], parameters["args"]
             path_to_contract = os.path.join("./","cadence", "contracts", file)
-            command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && flow accounts add-contract {path_to_contract} --network {network} --signer {account}"
+            command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && flow accounts add-contract {path_to_contract} {self.parseExecutionArgs(args)} --network {network} --signer {account}"
             response = self.execute_shell_command(command=command)
             if response["result"] == "OK":
                 response['detail'] = f"{file} deployed to {account} on {network} successfully"
@@ -194,9 +194,9 @@ class Command_Handler(Response_Codes):
         
     def run_transaction(self, parameters): 
         try:
-            user, workspace, account, network, file = parameters["user"], parameters["workspace"], parameters["account"], parameters["network"], parameters["file"]
+            user, workspace, account, network, file, args = parameters["user"], parameters["workspace"], parameters["account"], parameters["network"], parameters["file"], parameters["args"]
             path_to_transaction_file = f"./cadence/transactions/{file}"
-            command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && flow transactions send {path_to_transaction_file} --proposer {account} --authorizer {account} --payer {account} --filter payload --network {network}"
+            command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && flow transactions send {path_to_transaction_file} {self.parseExecutionArgs(args)} --proposer {account} --authorizer {account} --payer {account} --filter payload --network {network}"
             build_response = self.execute_shell_command(command=command)
             return build_response
         except KeyError as missing_args:
@@ -259,9 +259,9 @@ class Command_Handler(Response_Codes):
 
     def run_script(self, parameters): 
         try:
-            user, workspace, network, file = parameters["user"], parameters["workspace"], parameters["network"], parameters["file"]
+            user, workspace, network, file, args = parameters["user"], parameters["workspace"], parameters["network"], parameters["file"], parameters["args"]
             path_to_script = os.path.join("./","cadence", "scripts", file)
-            command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && flow scripts execute {path_to_script} --network {network}"
+            command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && flow scripts execute {path_to_script} {self.parseExecutionArgs(args)} --network {network}"
             response = self.execute_shell_command(command=command)
             return response
         except KeyError as missing_args:
@@ -273,5 +273,10 @@ class Command_Handler(Response_Codes):
         process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, encoding='utf8', text=False)
         stdout, stderr = process.communicate()
         return {"result": self.SUCCESS if not stderr else self.ERROR, "detail": stdout, "error": stderr}
-        
+
+    def parseExecutionArgs(self, argsList):
+        if argsList:
+            return " ".join(argsList)
+        return ''
+
 
