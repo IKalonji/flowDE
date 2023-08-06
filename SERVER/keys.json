@@ -1,1 +1,28 @@
-{"derivationPath":"m/44'/539'/0'/0/0","mnemonic":"glue hazard abandon plastic child army bird syrup misery fashion wreck super","private":"4d2834338c2a35aca39ab8be94b45fc5d5722975a1114e0f3dac80ee32813e5e","public":"8f194b815fcaa77d0b3749566a0d120d57c68711689710db79fd197b0d5a97879b25076d98457c691a463538b4197912516978696a70b0fd847895c4d13d6e99", "account": "0x7721b98bbf12fcb9"}
+{
+    "files": [
+        {
+            "filename": ".gitignore", 
+            "content": "out\n\ntarget\n"
+        }, 
+        {
+        "filename": "Forc.toml", 
+        "content": "[project]\n\nauthors = ['Ikalonji']\n\nentry = 'main.sw'\n\nlicense = 'Apache-2.0'\n\nname = 'fuel-demo'\n\n\n\n[dependencies]\n"
+        }
+    ], 
+    "subfolders": [
+        {
+            "name": "src", 
+            "root": {
+                "files": 
+                [
+                    {
+                        "filename": "main.sw", 
+                        "content": "contract;\n\n\n\nabi MyContract {\n\n    fn test_function() -> bool;\n\n}\n\n\n\nimpl MyContract for Contract {\n\n    fn test_function() -> bool {\n\n        true\n\n    }\n\n}\n"
+                    }
+                ], 
+                "subfolders": [
+                ]
+            }
+        }
+    ]
+}

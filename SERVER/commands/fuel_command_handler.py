@@ -2,12 +2,14 @@ import json
 import subprocess
 import os
 from logging import log
+from pprint import pprint
 
 from commands.response_codes import Response_Codes
 
-class Command_Handler(Response_Codes):
+class Fuel_Command_Handler(Response_Codes):
     def __init__(self) -> None:
         super().__init__()
+        self.isForcInstalled()
         self.valid_commands = {
             "create_workspace": self.create_workspace,
             "delete_workspace": self.delete_workspace,
@@ -29,7 +31,13 @@ class Command_Handler(Response_Codes):
         self.WALLET_CREATOR_ACCOUNT = "0x7721b98bbf12fcb9"
         self.WALLET_CREATOR_KEY = "4d2834338c2a35aca39ab8be94b45fc5d5722975a1114e0f3dac80ee32813e5e"
 
+    def isForcInstalled(self):
+        command = "forc --version"
+        response = self.execute_shell_command(command=command)
+        print(response)
+
     def handle_request(self, command, request):
+        print(request, command)
         try:
             execution_response = self.valid_commands[command](request)
             return execution_response
@@ -65,7 +73,7 @@ class Command_Handler(Response_Codes):
     def create_workspace(self, parameters):
         try:
             user, workspace = parameters["user"], parameters["workspace"]
-            command = f"cd {self.BASE_DIR} && cd {user} && flow setup {workspace}"
+            command = f"cd {self.BASE_DIR} && cd {user} && forc new {workspace}"
             response = self.execute_shell_command(command=command)
             if response["result"] == "OK":
                 response['detail'] = f"Workspace {workspace} created successfully"
@@ -89,6 +97,7 @@ class Command_Handler(Response_Codes):
             return self.invalid_server_response
 
     def get_workspace(self, parameters):
+        print("getting fuel workspaces")
         try:
             user = parameters["user"]
             users_folder_path = os.path.join(os.getcwd(),"users", user)
@@ -97,31 +106,8 @@ class Command_Handler(Response_Codes):
             for workspace in userDir :
                 new_workspace = {
                     "workspace": workspace,
-                    "folders": {
-
-                    },
-                    "flow.json": "",
-                    "README.md": ""
+                    "dir": self.process_folder(os.path.join(users_folder_path, workspace)),
                 }
-                for file_or_folder in os.listdir(os.path.join(users_folder_path, workspace)):
-                    if os.path.isfile(os.path.join(users_folder_path, workspace, file_or_folder)) :
-                        with open(os.path.join(users_folder_path, workspace, file_or_folder), "r", encoding='utf8') as file:
-                            file_content = file.readlines()
-                            new_workspace[file_or_folder] = "\n".join(file_content)
-                    elif file_or_folder == "cadence":
-                        for folder in os.listdir(os.path.join(users_folder_path, workspace, "cadence")):
-                            new_workspace["folders"][folder] = []
-                            for file_in_folder in os.listdir(os.path.join(users_folder_path, workspace, "cadence", folder)):
-                                if file_in_folder[0] == ".":
-                                    continue
-                                with open(os.path.join(users_folder_path, workspace, "cadence", folder, file_in_folder), "r", encoding='utf8') as file:
-                                    file_content = file.readlines()
-                                    new_workspace["folders"][folder].append(
-                                        {
-                                            "name": file_in_folder,
-                                            "content": "\n".join(file_content)
-                                        }
-                                    )
                 workspace_builder.append(new_workspace)
             return {"result": self.SUCCESS, "detail": "Retrieved Workspaces", "data": workspace_builder}
         except KeyError as missing_args:
@@ -132,7 +118,7 @@ class Command_Handler(Response_Codes):
     def create_file(self, parameters):
         try:
             user, workspace, folder, file = parameters["user"], parameters["workspace"], parameters["folder"], parameters["file"]
-            command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && cd cadence && cd {folder} && touch {file}"
+            command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && cd {folder} && touch {file}"
             response = self.execute_shell_command(command=command)
             if response["result"] == "OK":
                 response['detail'] = f"File {file} created successfully"
@@ -145,7 +131,7 @@ class Command_Handler(Response_Codes):
     def rename_file(self, parameters):
         try:
             user, workspace, folder, old_file, new_file = parameters["user"], parameters["workspace"], parameters["folder"],parameters["old_file"], parameters["new_file"]
-            command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && cd cadence && cd {folder}, mv {old_file} {new_file}"
+            command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && cd {folder}, mv {old_file} {new_file}"
             response = self.execute_shell_command(command=command)
             return response
         except KeyError as missing_args:
@@ -156,7 +142,7 @@ class Command_Handler(Response_Codes):
     def add_to_file(self, parameters):
         try:
             user, workspace, folder, file, contents = parameters["user"], parameters["workspace"], parameters["folder"], parameters["file"], parameters["contents"]
-            with open(os.path.join(os.getcwd(),self.BASE_DIR, user, workspace, "cadence", folder, file), "w", encoding="utf-8") as file:
+            with open(os.path.join(os.getcwd(),self.BASE_DIR, user, workspace, folder, file), "w", encoding="utf-8") as file:
                 file.write(contents)
                 file.close()
             return {"result": self.SUCCESS, "detail": f"File written to {folder}"}
@@ -168,7 +154,7 @@ class Command_Handler(Response_Codes):
     def delete_file(self, parameters):
         try:
             user, workspace, folder, file = parameters["user"], parameters["workspace"], parameters["folder"], parameters["file"]
-            command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && cd cadence && cd {folder} && rm -rf {file}"
+            command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && cd {folder} && rm -rf {file}"
             response = self.execute_shell_command(command=command)
             if response["result"] == "OK":
                 response['detail'] = f"File: {file} deleted successfully"
@@ -181,8 +167,8 @@ class Command_Handler(Response_Codes):
     def deploy_contracts(self, parameters):
         try:
             user, workspace, account, network, file, args = parameters["user"], parameters["workspace"], parameters["account_name"], parameters["network"], parameters["file"], parameters["args"]
-            path_to_contract = os.path.join("./","cadence", "contracts", file)
-            command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && flow accounts add-contract {path_to_contract} {self.parseExecutionArgs(args)} --network {network} --signer {account}"
+            # path_to_contract = os.path.join("./","cadence", "contracts", file)
+            command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && forc build"
             response = self.execute_shell_command(command=command)
             if response["result"] == "OK":
                 response['detail'] = f"{file} deployed to {account} on {network} successfully"
@@ -195,8 +181,8 @@ class Command_Handler(Response_Codes):
     def run_transaction(self, parameters): 
         try:
             user, workspace, account, network, file, args = parameters["user"], parameters["workspace"], parameters["account"], parameters["network"], parameters["file"], parameters["args"]
-            path_to_transaction_file = f"./cadence/transactions/{file}"
-            command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && flow transactions send {path_to_transaction_file} {self.parseExecutionArgs(args)} --proposer {account} --authorizer {account} --payer {account} --filter payload --network {network}"
+            # path_to_transaction_file = f"./cadence/transactions/{file}"
+            command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && forc build"
             build_response = self.execute_shell_command(command=command)
             return build_response
         except KeyError as missing_args:
@@ -260,8 +246,7 @@ class Command_Handler(Response_Codes):
     def run_script(self, parameters): 
         try:
             user, workspace, network, file, args = parameters["user"], parameters["workspace"], parameters["network"], parameters["file"], parameters["args"]
-            path_to_script = os.path.join("./","cadence", "scripts", file)
-            command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && flow scripts execute {path_to_script} {self.parseExecutionArgs(args)} --network {network}"
+            command = f"cd {self.BASE_DIR} && cd {user} && cd {workspace} && forc build"
             response = self.execute_shell_command(command=command)
             return response
         except KeyError as missing_args:
@@ -272,11 +257,39 @@ class Command_Handler(Response_Codes):
     def execute_shell_command(self, command):
         process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, encoding='utf8', text=False)
         stdout, stderr = process.communicate()
-        return {"result": self.SUCCESS if not stderr else self.ERROR, "detail": stdout, "error": stderr}
+        return {"result": self.SUCCESS if not stderr else self.ERROR, "detail": stdout.strip(), "error": stderr.strip()}
 
     def parseExecutionArgs(self, argsList):
         if argsList:
             return " ".join(argsList)
         return ''
+
+    def process_folder(self, folder_path):
+        folder_data = {
+            'files': [],
+            'subfolders': []
+        }
+        
+        for item in os.listdir(folder_path):
+            item_path = os.path.join(folder_path, item)
+            if os.path.isfile(item_path) and not item[0] == ".":
+                with open(item_path, 'r') as file:
+                    data = file.readlines()
+                    file_object = {
+                        'filename': item,
+                        'content': "\n".join(data)
+                    }
+                    folder_data['files'].append(file_object)
+            elif not os.path.isfile(item_path):
+                subfolder = {
+                    "name": item,
+                    "root": self.process_folder(item_path)
+                }
+                folder_data['subfolders'].append(subfolder)
+        return folder_data
+
+
+
+
 
 

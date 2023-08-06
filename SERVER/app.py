@@ -3,35 +3,56 @@ from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
 from logging import log
 from dotenv import dotenv_values, load_dotenv
-from commands.command_handler import Command_Handler
+from commands.flow_command_handler import Flow_Command_Handler
+from commands.fuel_command_handler import Fuel_Command_Handler
 import openai
 
 load_dotenv()
 app = Flask(__name__)
 CORS(app)
-handler = Command_Handler()
+flow_handler = Flow_Command_Handler()
+fuel_handler = Fuel_Command_Handler()
+
 print(os.getenv('OPENAI'))
 openai.api_key = os.getenv('OPENAI')
 
-BASE_URL = "/v1/flowde/"
+BASE_FLOWDE_URL = "/v1/flowde/"
+BASE_FUELSTATION_URL = "/v1/fuelstation/"
+
 
 @app.route("/")
 def index():
   return render_template("index.html")
 
-@app.route(f"{BASE_URL}ready")
-def ready():
+# flowDE routes
+@app.route(f"{BASE_FLOWDE_URL}ready")
+def ready_flow():
   return {"result": "OK", "details": "flowDE service is READY"}
 
-@app.route(f"{BASE_URL}live")
-def live():
+@app.route(f"{BASE_FLOWDE_URL}live")
+def live_flow():
   return {"result": "OK", "details": "flowDE service is ALIVE"}
 
-@app.route(f"{BASE_URL}<command>", methods=["POST"])
-def command(command):
+@app.route(f"{BASE_FLOWDE_URL}<command>", methods=["POST"])
+def command_flow(command):
   request_data = request.get_json()
-  return handler.handle_request(command,dict(request_data))
+  return flow_handler.handle_request(command,dict(request_data))
 
+# fuelstation routes
+@app.route(f"{BASE_FUELSTATION_URL}ready")
+def ready_fuel():
+  return {"result": "OK", "details": "Fuel Station service is READY"}
+
+@app.route(f"{BASE_FUELSTATION_URL}live")
+def live_fuel():
+  return {"result": "OK", "details": "Fuel Station service is ALIVE"}
+
+@app.route(f"{BASE_FUELSTATION_URL}<command>", methods=["POST"])
+def command_fuel(command):
+  request_data = request.get_json()
+  return fuel_handler.handle_request(command,dict(request_data))
+
+# ricardian routes
 @app.route(f"/v1/ricardian", methods=["POST"])
 def ricardian():
   request_data = request.get_json()
